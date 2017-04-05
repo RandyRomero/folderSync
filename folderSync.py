@@ -10,16 +10,19 @@ logging.basicConfig(
 	)
 
 if os.path.exists('.\log'):
-	timestr = time.strftime('%Y-%m-%d__%H-%M-%S')
+	timestr = time.strftime('%Y-%m-%d__%H-%M')
 	newLogName = os.path.join('log', 'log_' + timestr + '.txt')
-	if not os.path.exists(newLogName):
-		logFile = open(os.path.join('log', 'log_' + timestr + '.txt'), 'w')
+	if os.path.exists(newLogName):
+		i = 2
+		if os.path.exists(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt')):
+			while os.path.exists(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt')):
+				i += 1
+				continue
+			logFile = open(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt'), 'w')
+		else:
+			logFile = open(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt'), 'w')
 	else:
-		# i = 1
-		# while os.path.exists(newLogName):
-		# 	i += 1
-		# 	logFile = open(os.path.join('log', 'log_' + timestr + ' (' + str(i) + ').txt'), 'w')
-
+		logFile = open(newLogName, 'w')
 else:
 	os.mkdir('.\log')
 	timestr = time.strftime('%Y-%m-%d__%H-%M-%S')
