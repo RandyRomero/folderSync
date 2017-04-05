@@ -9,18 +9,16 @@ logging.basicConfig(
 	level = logging.DEBUG
 	)
 
+# make log file with date and time // if file has already been ctreated, make file(2) and so on
 if os.path.exists('.\log'):
-	timestr = time.strftime('%Y-%m-%d__%H-%M')
+	timestr = time.strftime('%Y-%m-%d__%Hh%Mm')
 	newLogName = os.path.join('log', 'log_' + timestr + '.txt')
 	if os.path.exists(newLogName):
 		i = 2
-		if os.path.exists(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt')):
-			while os.path.exists(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt')):
-				i += 1
-				continue
-			logFile = open(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt'), 'w')
-		else:
-			logFile = open(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt'), 'w')
+		while os.path.exists(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt')):
+			i += 1
+			continue
+		logFile = open(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt'), 'w')
 	else:
 		logFile = open(newLogName, 'w')
 else:
