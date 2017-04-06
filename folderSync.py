@@ -2,7 +2,7 @@
 
 '''Program that can sync all files and folders between two chosen folders. I need it to keep my photo-backup updated. But script should be able to sync in both ways. And keep track of changes in both folders.'''
 
-import logging, os, time
+import logging, os, time, send2trash
 
 logging.basicConfig(
 	format = "%(levelname) -1s %(asctime)s line %(lineno)s: %(message)s",
@@ -18,13 +18,13 @@ if os.path.exists('.\log'):
 		while os.path.exists(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt')):
 			i += 1
 			continue
-		logFile = open(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt'), 'w')
+		logFile = open(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt'), 'w', encoding='UTF-8')
 	else:
-		logFile = open(newLogName, 'w')
+		logFile = open(newLogName, 'w', encoding='UTF-8')
 else:
 	os.mkdir('.\log')
 	timestr = time.strftime('%Y-%m-%d__%H-%M-%S')
-	logFile = open(os.path.join('log', 'log_' + timestr + '.txt'), 'w')
+	logFile = open(os.path.join('log', 'log_' + timestr + '.txt'), 'w', encoding='UTF-8')
 
 # def prlog(message):
 # 	print(message)
@@ -38,11 +38,6 @@ def hasItEverBeenSynced(rootFolder):
 	else:
 		return False
 
-
-
-#TODO make menu to let user choose folders to sync
-# ubtil then I am gonna set it manually at code to save some time while checking
-
 firstFolder = ('.\\A')
 secondFolder = ('.\\B')
 
@@ -50,4 +45,33 @@ firstFolderSynced = hasItEverBeenSynced(firstFolder)
 logging.info(firstFolderSynced)
 secondFolderSynced = hasItEverBeenSynced(secondFolder)
 logging.info(secondFolderSynced)
+
+def getSnapshot(rootFolder):
+	
+	currentSnapshot = []
+	for root, folders, files in os.walk(rootFolder):
+		# files = [x for x in files if not x[0] == '.']
+		# folders[:] = [x for x in folders if not x[0] == '.']
+		
+		for folder in folders:
+			currentSnapshot.append(os.path.join(root, folder))
+		
+		for file in files:
+			currentSnapshot.append(os.path.join(root, file))
+
+	for item in currentSnapshot:
+		logFile.write(item + '\n')	
+	
+	logging.info('There are ' + str(len(currentSnapshot)) + ' files and folders.')
+
+getSnapshot('D:\\YandexDisk\\Studies\\Python\\Chapter 9')
+		
+
+
+
+
+#TODO make menu to let user choose folders to sync
+# ubtil then I am gonna set it manually at code to save some time while checking
+
+
 
