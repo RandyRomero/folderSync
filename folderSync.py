@@ -40,6 +40,7 @@ def getSnapshot(rootFolder):
 	# get all file and folder paths, and collect file size and file time of modification
 	foldersNumber = 0
 	filesNumber = 0
+	totalSize = 0
 
 	currentSnapshot = []
 	for root, folders, files in os.walk(rootFolder):
@@ -53,11 +54,14 @@ def getSnapshot(rootFolder):
 		
 		for file in files:
 			filePath = os.path.join(root, file)
-			currentSnapshot.append([filePath, 'file', os.path.getsize(filePath), os.path.getmtime(filePath)])
+			sizeOfCurrentFile = os.path.getsize(filePath)
+			totalSize += sizeOfCurrentFile
+			currentSnapshot.append([filePath, 'file', sizeOfCurrentFile, os.path.getmtime(filePath)])
 			filesNumber += 1
 
 	
 	prlog('There are ' + str(foldersNumber) + ' folders and ' + str(filesNumber) + ' files in ' + rootFolder)
+	prlog('Total size of ' + rootFolder + ' is ' + str("{0:.0f}".format(totalSize / 1024 /1024)) + ' MB.\n')
 
 # make log file with date and time // if file has already been ctreated, make file(2) and so on
 if os.path.exists('.\log'):
