@@ -46,6 +46,7 @@ logging.info(firstFolderSynced)
 secondFolderSynced = hasItEverBeenSynced(secondFolder)
 logging.info(secondFolderSynced)
 
+
 def getSnapshot(rootFolder):
 	
 	currentSnapshot = []
@@ -54,20 +55,17 @@ def getSnapshot(rootFolder):
 		# folders[:] = [x for x in folders if not x[0] == '.']
 		
 		for folder in folders:
-			currentSnapshot.append(os.path.join(root, folder))
+			folderPath = os.path.join(root, folder)
+			currentSnapshot.append([folderPath, 'folder'])
 		
 		for file in files:
-			currentSnapshot.append(os.path.join(root, file))
+			filePath = os.path.join(root, file)
+			currentSnapshot.append([filePath, 'file', os.path.getsize(filePath), os.path.getmtime(filePath)])
 
-	for item in currentSnapshot:
-		logFile.write(item + '\n')	
 	
 	logging.info('There are ' + str(len(currentSnapshot)) + ' files and folders.')
 
-getSnapshot('D:\\YandexDisk\\Studies\\Python\\Chapter 9')
-		
-
-
+getSnapshot('C:\\yandex.disk\\Studies\\Python\\Chapter 9')
 
 
 #TODO make menu to let user choose folders to sync
