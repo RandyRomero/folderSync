@@ -38,6 +38,8 @@ def hasItEverBeenSynced(rootFolder):
 
 def getSnapshot(rootFolder):
 	# get all file and folder paths, and collect file size and file time of modification
+	foldersNumber = 0
+	filesNumber = 0
 
 	currentSnapshot = []
 	for root, folders, files in os.walk(rootFolder):
@@ -47,13 +49,15 @@ def getSnapshot(rootFolder):
 		for folder in folders:
 			folderPath = os.path.join(root, folder)
 			currentSnapshot.append([folderPath, 'folder'])
+			foldersNumber += 1
 		
 		for file in files:
 			filePath = os.path.join(root, file)
 			currentSnapshot.append([filePath, 'file', os.path.getsize(filePath), os.path.getmtime(filePath)])
+			filesNumber += 1
 
 	
-	prlog('There are ' + str(len(currentSnapshot)) + ' files and folders.')
+	prlog('There are ' + str(foldersNumber) + ' folders and ' + str(filesNumber) + ' files in ' + rootFolder)
 
 # make log file with date and time // if file has already been ctreated, make file(2) and so on
 if os.path.exists('.\log'):
