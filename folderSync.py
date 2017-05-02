@@ -65,11 +65,12 @@ def getSnapshot(rootFolder):
 				os.path.getmtime(filePath)])
 			filesNumber += 1
 
-	
 	prlog('There are ' + str(foldersNumber) + ' folders and ' + 
 		str(filesNumber) + ' files in ' + rootFolder)
 	prlog('Total size of ' + rootFolder + ' is ' + 
 		str("{0:.0f}".format(totalSize / 1024 /1024)) + ' MB.\n')
+
+	return currentSnapshot
 
 
 def makeLogFile():
