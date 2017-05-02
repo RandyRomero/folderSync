@@ -1,6 +1,9 @@
 #! python3
 
-'''Program that can sync all files and folders between two chosen folders. I need it to keep my photo-backup updated. But script should be able to sync in both ways. And keep track of changes in both folders.'''
+'''Program that can sync all files and folders between two chosen folders. 
+	I need it to keep my photo-backup updated. 
+	But script should be able to sync in both ways. 
+	And keep track of changes in both folders.'''
 
 import logging, os, time, send2trash
 
@@ -37,7 +40,9 @@ def hasItEverBeenSynced(rootFolder):
 
 
 def getSnapshot(rootFolder):
-	# get all file and folder paths, and collect file size and file time of modification
+	# get all file and folder paths, 
+	# and collect file size and file time of modification
+	
 	foldersNumber = 0
 	filesNumber = 0
 	totalSize = 0
@@ -56,42 +61,65 @@ def getSnapshot(rootFolder):
 			filePath = os.path.join(root, file)
 			sizeOfCurrentFile = os.path.getsize(filePath)
 			totalSize += sizeOfCurrentFile
-			currentSnapshot.append([filePath, 'file', sizeOfCurrentFile, os.path.getmtime(filePath)])
+			currentSnapshot.append([filePath, 'file', sizeOfCurrentFile, 
+				os.path.getmtime(filePath)])
 			filesNumber += 1
 
 	
-	prlog('There are ' + str(foldersNumber) + ' folders and ' + str(filesNumber) + ' files in ' + rootFolder)
-	prlog('Total size of ' + rootFolder + ' is ' + str("{0:.0f}".format(totalSize / 1024 /1024)) + ' MB.\n')
+	prlog('There are ' + str(foldersNumber) + ' folders and ' + 
+		str(filesNumber) + ' files in ' + rootFolder)
+	prlog('Total size of ' + rootFolder + ' is ' + 
+		str("{0:.0f}".format(totalSize / 1024 /1024)) + ' MB.\n')
 
-# make log file with date and time // if file has already been ctreated, make file(2) and so on
-if os.path.exists('.\log'):
-	timestr = time.strftime('%Y-%m-%d__%Hh%Mm')
-	newLogName = os.path.join('log', 'log_' + timestr + '.txt')
-	if os.path.exists(newLogName):
-		i = 2
-		while os.path.exists(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt')):
-			i += 1
+
+def makeLogFile():
+
+# make log file with date and time
+# if file has already been ctreated, make file(2) and so on
+
+	if os.path.exists('.\log'):
+		timestr = time.strftime('%Y-%m-%d__%Hh%Mm')
+		newLogName = os.path.join('log', 'log_' + timestr + '.txt')
+		if os.path.exists(newLogName):
+			i = 2
+			while os.path.exists(os.path.join('log', 'log ' + timestr + 
+				'(' + str(i) + ').txt')):
+				i += 1
+				continue
+			logFile = open(os.path.join('log', 'log ' + timestr + 
+				'(' + str(i) + ').txt'), 'w', encoding='UTF-8')
+		else:
+			logFile = open(newLogName, 'w', encoding='UTF-8')
+	else:
+		os.mkdir('.\log')
+		timestr = time.strftime('%Y-%m-%d__%H-%M-%S')
+		logFile = open(os.path.join('log', 'log_' + timestr + '.txt'), 
+			'w', encoding='UTF-8')
+
+	return logFile
+
+def chooseBothFolders():
+	# let user choose folders and check them not to have the same path
+	while True:
+		prlog('Please, choose first folder to sync.')
+		firstFolder = chooseFolder()
+		prlog('Please, choose second folder to sync.')
+		secondFolder = chooseFolder()
+		if firstFolder == secondFolder:
+			prlog('\nPaths can\'t be equal. Start over')
 			continue
-		logFile = open(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt'), 'w', encoding='UTF-8')
-	else:
-		logFile = open(newLogName, 'w', encoding='UTF-8')
-else:
-	os.mkdir('.\log')
-	timestr = time.strftime('%Y-%m-%d__%H-%M-%S')
-	logFile = open(os.path.join('log', 'log_' + timestr + '.txt'), 'w', encoding='UTF-8')
+		else:
+			prlog('\nPaths accepted. Start analyzing...\n')
+			break
 
-# let user choose folders and check them not to have the same path
-while True:
-	prlog('Please, choose first folder to sync.')
-	firstFolder = chooseFolder()
-	prlog('Please, choose second folder to sync.')
-	secondFolder = chooseFolder()
-	if firstFolder == secondFolder:
-		prlog('\nPaths can\'t be equal. Start over')
-		continue
-	else:
-		prlog('\nPaths accepted. Start analyzing...\n')
-		break	
+	return firstFolder, secondFolder 			
+
+logFile = makeLogFile()
+
+#paths hardcoded for the sake of speed of testing
+#firstFolder, secondFolder = chooseBothFolders()
+firstFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\A'
+secondFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\B'
 
 firstFolderSynced = hasItEverBeenSynced(firstFolder)
 logging.info(firstFolderSynced)
@@ -105,7 +133,7 @@ snapshostSecondFolder = getSnapshot(secondFolder)
 
 
 #TODO make menu to let user choose folders to sync
-# ubtil then I am gonna set it manually at code to save some time while checking
+# until then I am gonna set it manually at code to save some time while checking
 
 
 
