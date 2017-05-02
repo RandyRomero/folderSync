@@ -31,6 +31,22 @@ def chooseFolder():
 			print('Got it!')
 			return pathToFolder
 
+def menuChooseFolders():
+	# let user choose folders and check them not to have the same path
+	while True:
+		prlog('Please, choose first folder to sync.')
+		firstFolder = chooseFolder()
+		prlog('Please, choose second folder to sync.')
+		secondFolder = chooseFolder()
+		if firstFolder == secondFolder:
+			prlog('\nPaths can\'t be equal. Start over')
+			continue
+		else:
+			prlog('\nPaths accepted. Start analyzing...\n')
+			break
+
+	return firstFolder, secondFolder			
+
 def hasItEverBeenSynced(rootFolder):
 	# check if there is already snapshot from previous sync
 	if os.path.exists(os.path.join(rootFolder, '.folderSync')):
@@ -99,26 +115,31 @@ def makeLogFile():
 
 	return logFile
 
-def chooseBothFolders():
-	# let user choose folders and check them not to have the same path
-	while True:
-		prlog('Please, choose first folder to sync.')
-		firstFolder = chooseFolder()
-		prlog('Please, choose second folder to sync.')
-		secondFolder = chooseFolder()
-		if firstFolder == secondFolder:
-			prlog('\nPaths can\'t be equal. Start over')
-			continue
-		else:
-			prlog('\nPaths accepted. Start analyzing...\n')
-			break
 
-	return firstFolder, secondFolder 			
+# def compareLengthOfSnapshots(snap1, snap2):
+# 	if len(snap1) > len(snap2):
+# 		return snap1
+# 	else:
+# 		return snap2
+
+def compareSnapshots(snap1, snap2):
+	#compare existence of folders
+	#compare existence and time of modification of files
+
+ 	alikeItems = []
+ 	for item1 in snap1:
+ 		if item1[1] in snap2:
+ 			if item2[1] == item1[1]:
+	 			if snap2[2] == snap1[2]:
+
+ 				alikeItems.append(snap1)
+
+
 
 logFile = makeLogFile()
 
 #paths hardcoded for the sake of speed of testing
-#firstFolder, secondFolder = chooseBothFolders()
+#firstFolder, secondFolder = menuChooseFolders()
 firstFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\A'
 secondFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\B'
 
