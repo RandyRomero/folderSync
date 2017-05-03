@@ -115,13 +115,6 @@ def makeLogFile():
 
 	return logFile
 
-
-# def compareLengthOfSnapshots(snap1, snap2):
-# 	if len(snap1) > len(snap2):
-# 		return snap1
-# 	else:
-# 		return snap2
-
 def compareSnapshots(snapA, snapB):
 	#check A against B
 
@@ -129,12 +122,13 @@ def compareSnapshots(snapA, snapB):
 	sameNameAndTimeItems = []
 	sameNameDiffTimeItems = []
 
-
-	for i in snapA:
-		if i[0][i] in snapB[0]:
-			print('yes')
+	i = 0
+	for item in snapA:
+		if item[0][i] in snapB[0][0]:
+			print('yes ' + str(i))
 		else:
 			print('no')
+		i += 1
 
 logFile = makeLogFile()
 
