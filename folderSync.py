@@ -5,7 +5,7 @@
 	But script should be able to sync in both ways. 
 	And keep track of changes in both folders.'''
 
-import logging, os, time, send2trash
+import logging, os, platform, time, send2trash
 
 logging.basicConfig(
 	format = "%(levelname) -1s %(asctime)s line %(lineno)s: %(message)s",
@@ -122,26 +122,36 @@ def makeLogFile():
 # 	else:
 # 		return snap2
 
-def compareSnapshots(snap1, snap2):
-	#compare existence of folders
-	#compare existence and time of modification of files
+def compareSnapshots(snapA, snapB):
+	#check A against B
 
- 	alikeItems = []
- 	for item1 in snap1:
- 		if item1[1] in snap2:
- 			if item2[1] == item1[1]:
-	 			if snap2[2] == snap1[2]:
-
- 				alikeItems.append(snap1)
+	notExistInB = []
+	sameNameAndTimeItems = []
+	sameNameDiffTimeItems = []
 
 
+	for i in snapA:
+		if i[0][i] in snapB[0]:
+			print('yes')
+		else:
+			print('no')
 
 logFile = makeLogFile()
 
 #paths hardcoded for the sake of speed of testing
-#firstFolder, secondFolder = menuChooseFolders()
-firstFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\A'
-secondFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\B'
+# Scrip gets the name of PC in order to work on my several laptops without
+# typing paths for folders to sync
+
+if platform.node() == 'ZenBook3':
+	print('You are on dev laptop. Using default adressess for test.')
+	firstFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\A'
+	secondFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\B'
+# elif:	
+# 	firstFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\A'
+# 	secondFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\B'
+else:
+	print('Unknown computer.')
+	firstFolder, secondFolder = menuChooseFolders()
 
 firstFolderSynced = hasItEverBeenSynced(firstFolder)
 logging.info(firstFolderSynced)
@@ -150,7 +160,7 @@ logging.info(secondFolderSynced)
 
 snapshostFirstFolder = getSnapshot(firstFolder)
 snapshostSecondFolder = getSnapshot(secondFolder)
-
+compareSnapshots(snapshostFirstFolder, snapshostSecondFolder)
 
 
 
