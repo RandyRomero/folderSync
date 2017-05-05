@@ -5,7 +5,7 @@
 	But script should be able to sync in both ways. 
 	And keep track of changes in both folders.'''
 
-import logging, os, platform, time, send2trash
+import logging, os, platform, time, send2trash, re
 
 logging.basicConfig(
 	format = "%(levelname) -1s %(asctime)s line %(lineno)s: %(message)s",
@@ -69,12 +69,12 @@ def getSnapshot(rootFolder):
 		# folders[:] = [x for x in folders if not x[0] == '.']
 		
 		for folder in folders:
-			folderPath = os.path.join(root, folder)
+			folderPath = os.path.relpath(os.path.join(root, folder))
 			currentSnapshot.append([folderPath, 'folder'])
 			foldersNumber += 1
 		
 		for file in files:
-			filePath = os.path.join(root, file)
+			filePath = os.path.relpath(os.path.join(root, file))
 			sizeOfCurrentFile = os.path.getsize(filePath)
 			totalSize += sizeOfCurrentFile
 			currentSnapshot.append([filePath, 'file', sizeOfCurrentFile, 
@@ -122,9 +122,15 @@ def compareSnapshots(snapA, snapB):
 	sameNameAndTimeItems = []
 	sameNameDiffTimeItems = []
 
+	pathsOfSnapB = []
+	for item in snapB:
+		# s = item[0]
+		print(re.search(r'^([^\\]*)(\\.*)', item[0]).group(2))
+		pathsOfSnapB.append(re.search(r'^([^\\]*)(\\.*)', item[0]).group(2))
+
 	i = 0
 	for item in snapA:
-		if item[0][i] in snapB[0][0]:
+		if re.search(r'^([^\\]*)(\\.*)', item[0]).group(2) in pathsOfSnapB:
 			print('yes ' + str(i))
 		else:
 			print('no')
