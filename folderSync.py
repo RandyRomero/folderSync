@@ -22,7 +22,7 @@ def chooseFolder():
 	while True:
 		pathToFolder = input('Path: ')
 		if not os.path.exists(pathToFolder):
-			prlog('This folder doeasn\'t exist. Write another one.')
+			prlog('This folder doesn\'t exist. Write another one.')
 			continue
 		if not os.path.isdir(pathToFolder):
 			prlog('You should denote path to folder, not to file. Try again.')
@@ -57,27 +57,30 @@ def hasItEverBeenSynced(rootFolder):
 def getSnapshot(rootFolder):
 	# get all file and folder paths, 
 	# and collect file size and file time of modification
-	
+	prlog('Getting snapshot of ' + rootFolder + '...')
+
 	foldersNumber = 0
 	filesNumber = 0
 	totalSize = 0
 
-	currentSnapshot = []
+	currentSnapshot = {}
+
 	for root, folders, files in os.walk(rootFolder):
 		# files = [x for x in files if not x[0] == '.']
 		# folders[:] = [x for x in folders if not x[0] == '.']
 		
 		for folder in folders:
 			folderPath = os.path.relpath(os.path.join(root, folder))
-			currentSnapshot.append([folderPath, 'folder'])
+			currentSnapshot[folderPath] = ['folder']
 			foldersNumber += 1
 		
 		for file in files:
 			filePath = os.path.relpath(os.path.join(root, file))
 			sizeOfCurrentFile = os.path.getsize(filePath)
 			totalSize += sizeOfCurrentFile
-			currentSnapshot.append([filePath, 'file', sizeOfCurrentFile, 
-				os.path.getmtime(filePath)])
+			currentSnapshot[filePath] = ['file', sizeOfCurrentFile, os.path.getmtime(filePath)]
+			# currentSnapshot.append([filePath, 'file', sizeOfCurrentFile, 
+			# 	os.path.getmtime(filePath)])
 			filesNumber += 1
 
 	prlog('There are ' + str(foldersNumber) + ' folders and ' + 
@@ -122,20 +125,20 @@ def compareSnapshots(snapA, snapB):
 	sameNameDiffTimeItems = []
 
 	pathsOfSnapB = []
-	for item in snapB:
-		print(re.search(r'^([^\\]*)(\\.*)', item[0]).group(2))
+	for key in snapB.keys():
+		# print(re.search(r'^([^\\]*)(\\.*)', key).group(2))
 		#get rid of name of root folder in the path to compare only what is inside folder
-		pathsOfSnapB.append(re.search(r'^([^\\]*)(\\.*)', item[0]).group(2))
+		pathsOfSnapB.append(re.search(r'^([^\\]*)(\\.*)', key).group(2))
 
-	i = 0
-	for item in snapA:
-		if re.search(r'^([^\\]*)(\\.*)', item[0]).group(2) in pathsOfSnapB:
+	for key in snapA:
+		if re.search(r'^([^\\]*)(\\.*)', key).group(2) in pathsOfSnapB:
+			if snapA[key][0] == 'file':
+				print('true')
 			#compare time of creation of files
+
 			
 		else:
-			print('no')
-			notExistInB.append(item[0])
-		i += 1
+			notExistInB.append(key)
 
 	#show files that don't exist in A but exists in B
 	prlog('')
@@ -153,9 +156,10 @@ if platform.node() == 'ZenBook3':
 	print('You are on dev laptop. Using default adressess for test.')
 	firstFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\A'
 	secondFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\B'
-# elif:	
-# 	firstFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\A'
-# 	secondFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\B'
+elif platform.node() == 'AcerVNitro':
+	print('You are on dev laptop. Using default adressess for test.')	
+	firstFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\A'
+	secondFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\B'
 else:
 	print('Unknown computer.')
 	firstFolder, secondFolder = menuChooseFolders()
@@ -164,6 +168,7 @@ firstFolderSynced = hasItEverBeenSynced(firstFolder)
 logging.info(firstFolderSynced)
 secondFolderSynced = hasItEverBeenSynced(secondFolder)
 logging.info(secondFolderSynced)
+
 
 snapshostFirstFolder = getSnapshot(firstFolder)
 snapshostSecondFolder = getSnapshot(secondFolder)
