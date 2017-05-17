@@ -54,7 +54,6 @@ def hasItEverBeenSynced(rootFolder):
 	else:
 		return False
 
-
 def getSnapshot(rootFolder):
 	# get all file and folder paths, 
 	# and collect file size and file time of modification
@@ -131,12 +130,14 @@ def compareSnapshots(snapA, snapB):
 	i = 0
 	for item in snapA:
 		if re.search(r'^([^\\]*)(\\.*)', item[0]).group(2) in pathsOfSnapB:
-			print('yes ' + str(i))
+			#compare time of creation of files
+			
 		else:
 			print('no')
 			notExistInB.append(item[0])
 		i += 1
 
+	#show files that don't exist in A but exists in B
 	prlog('')
 	prlog(str(len(notExistInB)) + ' files ain\'t exist in ' + secondFolder + ':')
 	for path in notExistInB:
