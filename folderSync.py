@@ -124,8 +124,8 @@ def compareSnapshots(snapA, snapB):
 
 	pathsOfSnapB = []
 	for item in snapB:
-		# s = item[0]
 		print(re.search(r'^([^\\]*)(\\.*)', item[0]).group(2))
+		#get rid of name of root folder in the path to compare only what is inside folder
 		pathsOfSnapB.append(re.search(r'^([^\\]*)(\\.*)', item[0]).group(2))
 
 	i = 0
@@ -134,7 +134,13 @@ def compareSnapshots(snapA, snapB):
 			print('yes ' + str(i))
 		else:
 			print('no')
+			notExistInB.append(item[0])
 		i += 1
+
+	prlog('')
+	prlog(str(len(notExistInB)) + ' files ain\'t exist in ' + secondFolder + ':')
+	for path in notExistInB:
+		prlog(path)
 
 logFile = makeLogFile()
 
