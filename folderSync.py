@@ -120,7 +120,8 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 
 	notExistInB = []
 	sameNameAndTimeItems = []
-	sameNameDiffTimeItems = []
+	toBeCopiedFromBtoA = []
+	toBeCopiedFromAtoB = []
 	
 	pathsOfSnapB = [] 
 	for key in snapB.keys():
@@ -135,24 +136,43 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 		#get rid of root folder in path
 
 		if path_A_File_wo_Root in pathsOfSnapB:
-			# prlog(key + ' --- EXISTS.')
-			if snapA[key][0] == 'file':
-				#compare time of creation of same files
+			if snapA[key][0] == 'file': #compare time of creation of same files
 				correspondigFileInB = rootB + path_A_File_wo_Root
 				if snapA[key][2] == snapB[correspondigFileInB][2]:
-					prlog(key + ' and ' + correspondigFileInB + ' are completely the same.')
-				
-			else:
-				print('folder')
+					#if files has the same time of modofication
+					sameNameAndTimeItems.append(key)
+					logFile.write(key + ' and ' + correspondigFileInB + ' are completely the same.')
+				elif snapA[key][2] > snapB[correspondigFileInB][2]:
+					#file in A older than file in B -> add it to list to be copied from B to A
+					toBeCopiedFromBtoA.append(key)
+
+				elif snapA[key][2] < snapB[correspondigFileInB][2]:
+					#file in A newer than file in B -> add it to list to be copied from A to B
+					toBeCopiedFromAtoB.append(key)
 		else:
-			# prlog(key + ' --- MISSING')
+			# if file doesn't exist in B -> add it in list to be copied from A
 			notExistInB.append(key)
+
+	######### result messages ########## 		
 
 	#show files that don't exist in A but exists in B
 	prlog('')
-	prlog(str(len(notExistInB)) + ' files ain\'t exist in ' + secondFolder + ':')
+	prlog('###########################')
+	prlog(firstFolder)
+	prlog('###########################')
+	prlog(str(len(sameNameAndTimeItems)) + ' equal files.')
+
+	prlog(str(len(notExistInB)) + ' files from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
+	logFile.write('\n')
 	for path in notExistInB:
-		prlog(path)
+		logFile.write(path + '\n')
+
+	prlog(str(len(toBeCopiedFromAtoB)) + ' files need to update in ' + secondFolder)
+	for path in toBeCopiedFromAtoB:
+		logFile.write(path + '\n')
+	prlog(str(len(toBeCopiedFromBtoA)) + ' files need to update in ' + firstFolder)
+	for path in toBeCopiedFromBtoA:
+		logFile.write(path + '\n')	
 
 logFile = makeLogFile()
 
@@ -186,7 +206,6 @@ snapshostFirstFolder = getSnapshot(firstFolder)
 snapshostSecondFolder = getSnapshot(secondFolder)
 rootFirstFolder = re.search(r'(\w+$)', firstFolder).group(0)
 rootSecondFolder = re.search(r'(\w+$)', secondFolder).group(0)
-print(rootSecondFolder)
 compareSnapshots(snapshostFirstFolder, rootFirstFolder, snapshostSecondFolder, rootSecondFolder)
 
 
