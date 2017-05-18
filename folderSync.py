@@ -54,6 +54,32 @@ def hasItEverBeenSynced(rootFolder):
 	else:
 		return False
 
+def makeLogFile():
+
+# make log file with date and time
+# if file has already been ctreated, make file(2) and so on
+
+	if os.path.exists('.\log'):
+		timestr = time.strftime('%Y-%m-%d__%Hh%Mm')
+		newLogName = os.path.join('log', 'log_' + timestr + '.txt')
+		if os.path.exists(newLogName):
+			i = 2
+			while os.path.exists(os.path.join('log', 'log ' + timestr + 
+				'(' + str(i) + ').txt')):
+				i += 1
+				continue
+			logFile = open(os.path.join('log', 'log ' + timestr + 
+				'(' + str(i) + ').txt'), 'w', encoding='UTF-8')
+		else:
+			logFile = open(newLogName, 'w', encoding='UTF-8')
+	else:
+		os.mkdir('.\log')
+		timestr = time.strftime('%Y-%m-%d__%H-%M-%S')
+		logFile = open(os.path.join('log', 'log_' + timestr + '.txt'), 
+			'w', encoding='UTF-8')
+
+	return logFile		
+
 def getSnapshot(rootFolder):
 	# get all file and folder paths, 
 	# and collect file size and file time of modification
@@ -79,8 +105,6 @@ def getSnapshot(rootFolder):
 			sizeOfCurrentFile = os.path.getsize(filePath)
 			totalSize += sizeOfCurrentFile
 			currentSnapshot[filePath] = ['file', sizeOfCurrentFile, os.path.getmtime(filePath)]
-			# currentSnapshot.append([filePath, 'file', sizeOfCurrentFile, 
-			# 	os.path.getmtime(filePath)])
 			filesNumber += 1
 
 	prlog('There are ' + str(foldersNumber) + ' folders and ' + 
@@ -91,53 +115,37 @@ def getSnapshot(rootFolder):
 	return currentSnapshot
 
 
-def makeLogFile():
-
-# make log file with date and time
-# if file has already been ctreated, make file(2) and so on
-
-	if os.path.exists('.\log'):
-		timestr = time.strftime('%Y-%m-%d__%Hh%Mm')
-		newLogName = os.path.join('log', 'log_' + timestr + '.txt')
-		if os.path.exists(newLogName):
-			i = 2
-			while os.path.exists(os.path.join('log', 'log ' + timestr + 
-				'(' + str(i) + ').txt')):
-				i += 1
-				continue
-			logFile = open(os.path.join('log', 'log ' + timestr + 
-				'(' + str(i) + ').txt'), 'w', encoding='UTF-8')
-		else:
-			logFile = open(newLogName, 'w', encoding='UTF-8')
-	else:
-		os.mkdir('.\log')
-		timestr = time.strftime('%Y-%m-%d__%H-%M-%S')
-		logFile = open(os.path.join('log', 'log_' + timestr + '.txt'), 
-			'w', encoding='UTF-8')
-
-	return logFile
-
-def compareSnapshots(snapA, snapB):
+def compareSnapshots(snapA, rootA, snapB, rootB):
 	#check A against B
 
 	notExistInB = []
 	sameNameAndTimeItems = []
 	sameNameDiffTimeItems = []
-
-	pathsOfSnapB = []
+	
+	pathsOfSnapB = [] 
 	for key in snapB.keys():
-		# print(re.search(r'^([^\\]*)(\\.*)', key).group(2))
-		#get rid of name of root folder in the path to compare only what is inside folder
-		pathsOfSnapB.append(re.search(r'^([^\\]*)(\\.*)', key).group(2))
+		#create list of paths from second folder's snapshot
+		path_B_File_wo_Root = re.search(r'^([^\\]*)(\\.*)', key).group(2)
+		#get rid of name of root folder in the path to compare only what is inside folders: get '\somefolder\somefile.ext' instead of 'rootfolder\somefolder\somefile.ext'
+
+		pathsOfSnapB.append(path_B_File_wo_Root)
 
 	for key in snapA:
-		if re.search(r'^([^\\]*)(\\.*)', key).group(2) in pathsOfSnapB:
-			if snapA[key][0] == 'file':
-				print('true')
-			#compare time of creation of files
+		path_A_File_wo_Root = re.search(r'^([^\\]*)(\\.*)', key).group(2)
+		#get rid of root folder in path
 
-			
+		if path_A_File_wo_Root in pathsOfSnapB:
+			# prlog(key + ' --- EXISTS.')
+			if snapA[key][0] == 'file':
+				#compare time of creation of same files
+				correspondigFileInB = rootB + path_A_File_wo_Root
+				if snapA[key][2] == snapB[correspondigFileInB][2]:
+					prlog(key + ' and ' + correspondigFileInB + ' are completely the same.')
+				
+			else:
+				print('folder')
 		else:
+			# prlog(key + ' --- MISSING')
 			notExistInB.append(key)
 
 	#show files that don't exist in A but exists in B
@@ -160,6 +168,10 @@ elif platform.node() == 'AcerVNitro':
 	print('You are on dev laptop. Using default adressess for test.')	
 	firstFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\A'
 	secondFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\B'
+elif platform.node() == 'ASUSG751':
+	print('You are on dev laptop. Using default adressess for test.')	
+	firstFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\A'
+	secondFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\B'
 else:
 	print('Unknown computer.')
 	firstFolder, secondFolder = menuChooseFolders()
@@ -172,7 +184,10 @@ logging.info(secondFolderSynced)
 
 snapshostFirstFolder = getSnapshot(firstFolder)
 snapshostSecondFolder = getSnapshot(secondFolder)
-compareSnapshots(snapshostFirstFolder, snapshostSecondFolder)
+rootFirstFolder = re.search(r'(\w+$)', firstFolder).group(0)
+rootSecondFolder = re.search(r'(\w+$)', secondFolder).group(0)
+print(rootSecondFolder)
+compareSnapshots(snapshostFirstFolder, rootFirstFolder, snapshostSecondFolder, rootSecondFolder)
 
 
 
