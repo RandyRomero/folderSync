@@ -15,7 +15,10 @@ logging.basicConfig(
 def prlog(message):
 	#both print and log messages
 	print(message)
-	logFile.write(message + '\n')
+	try:
+		logFile.write(message + '\n')
+	except TypeError:
+		logFile.write(str(message) + '\n')
 
 def chooseFolder():
 	# used to check validity of file's path given by user
@@ -138,17 +141,22 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 		if path_A_File_wo_Root in pathsOfSnapB:
 			if snapA[key][0] == 'file': #compare time of creation of same files
 				correspondigFileInB = rootB + path_A_File_wo_Root
+				print(time.ctime(snapA[key][2]))
+				print(time.ctime(snapB[correspondigFileInB][2]))
+				prlog(snapA[key][2])
+				prlog(snapB[correspondigFileInB][2])
 				if snapA[key][2] == snapB[correspondigFileInB][2]:
 					#if files has the same time of modofication
 					sameNameAndTimeItems.append(key)
 					logFile.write(key + ' and ' + correspondigFileInB + ' are completely the same.')
-				elif snapA[key][2] > snapB[correspondigFileInB][2]:
-					#file in A older than file in B -> add it to list to be copied from B to A
-					toBeCopiedFromBtoA.append(key)
 
 				elif snapA[key][2] < snapB[correspondigFileInB][2]:
 					#file in A newer than file in B -> add it to list to be copied from A to B
+					
 					toBeCopiedFromAtoB.append(key)
+				elif snapA[key][2] > snapB[correspondigFileInB][2]:
+					#file in A older than file in B -> add it to list to be copied from B to A
+					toBeCopiedFromBtoA.append(key)	
 		else:
 			# if file doesn't exist in B -> add it in list to be copied from A
 			notExistInB.append(key)
