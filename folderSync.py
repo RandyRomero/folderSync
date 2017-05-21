@@ -5,10 +5,10 @@
 	But script should be able to sync in both ways. 
 	And keep track of changes in both folders.'''
 
-import logging, os, platform, time, send2trash, re
+import logging, math, os, platform, time, send2trash, re
 
 logging.basicConfig(
-	format = "%(levelname) -1s %(asctime)s line %(lineno)s: %(message)s",
+	format = "%(levelname)s %(asctime)s line %(lineno)s: %(message)s",
 	level = logging.DEBUG
 	)
 
@@ -107,7 +107,8 @@ def getSnapshot(rootFolder):
 			filePath = os.path.relpath(os.path.join(root, file))
 			sizeOfCurrentFile = os.path.getsize(filePath)
 			totalSize += sizeOfCurrentFile
-			currentSnapshot[filePath] = ['file', sizeOfCurrentFile, os.path.getmtime(filePath)]
+			currentSnapshot[filePath] = ['file', sizeOfCurrentFile, math.ceil(os.path.getmtime(filePath))]
+			#math.ceil for rounding float
 			filesNumber += 1
 
 	prlog('There are ' + str(foldersNumber) + ' folders and ' + 
@@ -148,7 +149,9 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 				if snapA[key][2] == snapB[correspondigFileInB][2]:
 					#if files has the same time of modofication
 					sameNameAndTimeItems.append(key)
-					logFile.write(key + ' and ' + correspondigFileInB + ' are completely the same.')
+					logFile.write(key + ' and ' + correspondigFileInB + ' are the same.')
+					if snapA[key][1] != snapB[correspondigFileInB][1]:
+						raise RuntimeError('File ' + key + ' and file ' + correspondigFileInB + ' have same name and same modification time, but different size. It is impossible to figure out which one is newer automatically.')
 
 				elif snapA[key][2] < snapB[correspondigFileInB][2]:
 					#file in A newer than file in B -> add it to list to be copied from A to B
