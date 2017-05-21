@@ -7,18 +7,59 @@
 
 import logging, math, os, platform, time, send2trash, re
 
-logging.basicConfig(
-	format = "%(levelname)s %(asctime)s line %(lineno)s: %(message)s",
-	level = logging.DEBUG
-	)
+logFile = logging.getLogger(__name__) 
+#create logger for this specific module for logging to file
 
-def prlog(message):
+logFile.setLevel(logging.DEBUG)
+#set level of messages to be logged to file
+
+logConsole = logging.getLogger(__name__)
+#create logger for display messages in console
+
+logConsole.setLevel(logging.DEBUG)
+#set level of messages to be logged to file
+
+
+formatter = logging.Formatter('%(levelname)s %(asctime)s line %(lineno)s: %(message)s') 
+#define format of logging messages
+
+if os.path.exists('.\log'):
+	timestr = time.strftime('%Y-%m-%d__%Hh%Mm')
+	newLogName = os.path.join('log', 'log_' + timestr + '.txt')
+	if os.path.exists(newLogName):
+		i = 2
+		while os.path.exists(os.path.join('log', 'log ' + timestr + 
+			'(' + str(i) + ').txt')):
+			i += 1
+			continue
+		file_handler = logging.FileHandler(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt'))	
+	else:
+		file_handler = logging.FileHandler(newLogName)
+else:
+	os.mkdir('.\log')
+	timestr = time.strftime('%Y-%m-%d__%H-%M-%S')
+	file_handler = logging.FileHandler(os.path.join('log', 'log_' + timestr + '.txt'))
+#create new log every time	
+
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(formatter)
+#set level and format to log into file
+
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+stream_handler.setFormatter(formatter)
+#set format and level for printing log messages to console 
+
+logFile.addHandler(file_handler)
+logConsole.addHandler(stream_handler)
+#apply handler to this module (folderSync.py)
+
+
+def prlog(level, message):
 	#both print and log messages
 	print(message)
-	try:
-		logFile.write(message + '\n')
-	except TypeError:
-		logFile.write(str(message) + '\n')
+	getattr(logFile, level)(message)
+	#what is above means "logFile.level(message)" where message is method name which is known only by runtime. For example "logFile.info(message)"
 
 def chooseFolder():
 	# used to check validity of file's path given by user
@@ -55,38 +96,12 @@ def hasItEverBeenSynced(rootFolder):
 	if os.path.exists(os.path.join(rootFolder, '.folderSync')):
 		return True
 	else:
-		return False
-
-def makeLogFile():
-
-# make log file with date and time
-# if file has already been ctreated, make file(2) and so on
-
-	if os.path.exists('.\log'):
-		timestr = time.strftime('%Y-%m-%d__%Hh%Mm')
-		newLogName = os.path.join('log', 'log_' + timestr + '.txt')
-		if os.path.exists(newLogName):
-			i = 2
-			while os.path.exists(os.path.join('log', 'log ' + timestr + 
-				'(' + str(i) + ').txt')):
-				i += 1
-				continue
-			logFile = open(os.path.join('log', 'log ' + timestr + 
-				'(' + str(i) + ').txt'), 'w', encoding='UTF-8')
-		else:
-			logFile = open(newLogName, 'w', encoding='UTF-8')
-	else:
-		os.mkdir('.\log')
-		timestr = time.strftime('%Y-%m-%d__%H-%M-%S')
-		logFile = open(os.path.join('log', 'log_' + timestr + '.txt'), 
-			'w', encoding='UTF-8')
-
-	return logFile		
+		return False	
 
 def getSnapshot(rootFolder):
 	# get all file and folder paths, 
 	# and collect file size and file time of modification
-	prlog('Getting snapshot of ' + rootFolder + '...')
+	prlog('info', 'Getting snapshot of ' + rootFolder + '...')
 
 	foldersNumber = 0
 	filesNumber = 0
@@ -111,9 +126,9 @@ def getSnapshot(rootFolder):
 			#math.ceil for rounding float
 			filesNumber += 1
 
-	prlog('There are ' + str(foldersNumber) + ' folders and ' + 
+	prlog('info', 'There are ' + str(foldersNumber) + ' folders and ' + 
 		str(filesNumber) + ' files in ' + rootFolder)
-	prlog('Total size of ' + rootFolder + ' is ' + 
+	prlog('info', 'Total size of ' + rootFolder + ' is ' + 
 		str("{0:.0f}".format(totalSize / 1024 /1024)) + ' MB.\n')
 
 	return currentSnapshot
@@ -144,12 +159,12 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 				correspondigFileInB = rootB + path_A_File_wo_Root
 				print(time.ctime(snapA[key][2]))
 				print(time.ctime(snapB[correspondigFileInB][2]))
-				prlog(snapA[key][2])
-				prlog(snapB[correspondigFileInB][2])
+				prlog('info', snapA[key][2])
+				prlog('info', snapB[correspondigFileInB][2])
 				if snapA[key][2] == snapB[correspondigFileInB][2]:
 					#if files has the same time of modofication
 					sameNameAndTimeItems.append(key)
-					logFile.write(key + ' and ' + correspondigFileInB + ' are the same.')
+					logFile.info(key + ' and ' + correspondigFileInB + ' are the same.')
 					if snapA[key][1] != snapB[correspondigFileInB][1]:
 						raise RuntimeError('File ' + key + ' and file ' + correspondigFileInB + ' have same name and same modification time, but different size. It is impossible to figure out which one is newer automatically.')
 
@@ -167,50 +182,50 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 	######### result messages ########## 		
 
 	#show files that don't exist in A but exists in B
-	prlog('')
-	prlog('###########################')
-	prlog(firstFolder)
-	prlog('###########################')
-	prlog(str(len(sameNameAndTimeItems)) + ' equal files.')
+	prlog('info', '')
+	print('info', '###########################')
+	prlog('info', firstFolder)
+	prlog('info', '###########################')
+	prlog('info', str(len(sameNameAndTimeItems)) + ' equal files.')
 
-	prlog(str(len(notExistInB)) + ' files from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
-	logFile.write('\n')
+	prlog('info', str(len(notExistInB)) + ' files from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
+	logFile.info('\n')
 	for path in notExistInB:
-		logFile.write(path + '\n')
+		logFile.info(path + '\n')
 
-	prlog(str(len(toBeCopiedFromAtoB)) + ' files need to update in ' + secondFolder)
+	prlog('info', str(len(toBeCopiedFromAtoB)) + ' files need to update in ' + secondFolder)
 	for path in toBeCopiedFromAtoB:
-		logFile.write(path + '\n')
-	prlog(str(len(toBeCopiedFromBtoA)) + ' files need to update in ' + firstFolder)
+		logFile.info(path + '\n')
+	prlog('info', str(len(toBeCopiedFromBtoA)) + ' files need to update in ' + firstFolder)
 	for path in toBeCopiedFromBtoA:
-		logFile.write(path + '\n')	
+		logFile.info(path + '\n')	
 
-logFile = makeLogFile()
+# logFile = makeLogFile()
 
 #paths hardcoded for the sake of speed of testing
 # Scrip gets the name of PC in order to work on my several laptops without
 # typing paths for folders to sync
 
 if platform.node() == 'ZenBook3':
-	print('You are on dev laptop. Using default adressess for test.')
+	prlog('info', 'You are on dev laptop. Using default adressess for test.')
 	firstFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\A'
 	secondFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\B'
 elif platform.node() == 'AcerVNitro':
-	print('You are on dev laptop. Using default adressess for test.')	
+	print('info', 'You are on dev laptop. Using default adressess for test.')	
 	firstFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\A'
 	secondFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\B'
 elif platform.node() == 'ASUSG751':
-	print('You are on dev laptop. Using default adressess for test.')	
+	print('info', 'You are on dev laptop. Using default adressess for test.')	
 	firstFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\A'
 	secondFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\B'
 else:
-	print('Unknown computer.')
+	print('info', 'Unknown computer.')
 	firstFolder, secondFolder = menuChooseFolders()
 
 firstFolderSynced = hasItEverBeenSynced(firstFolder)
-logging.info(firstFolderSynced)
+logFile.info(firstFolderSynced)
 secondFolderSynced = hasItEverBeenSynced(secondFolder)
-logging.info(secondFolderSynced)
+logFile.info(secondFolderSynced)
 
 
 snapshostFirstFolder = getSnapshot(firstFolder)
