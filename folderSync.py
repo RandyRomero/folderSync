@@ -7,23 +7,20 @@
 
 import logging, math, os, platform, time, send2trash, re
 
-logFile = logging.getLogger(__name__) 
+logFile = logging.getLogger('fs1') 
 #create logger for this specific module for logging to file
 
 logFile.setLevel(logging.DEBUG)
 #set level of messages to be logged to file
 
-logConsole = logging.getLogger(__name__)
-#create logger for display messages in console
-
+logConsole = logging.getLogger('fs2')
 logConsole.setLevel(logging.DEBUG)
-#set level of messages to be logged to file
-
 
 formatter = logging.Formatter('%(levelname)s %(asctime)s line %(lineno)s: %(message)s') 
 #define format of logging messages
 
 if os.path.exists('.\log'):
+	''' create new log every time when script starts instead of writing in the same file '''
 	timestr = time.strftime('%Y-%m-%d__%Hh%Mm')
 	newLogName = os.path.join('log', 'log_' + timestr + '.txt')
 	if os.path.exists(newLogName):
@@ -32,23 +29,19 @@ if os.path.exists('.\log'):
 			'(' + str(i) + ').txt')):
 			i += 1
 			continue
-		file_handler = logging.FileHandler(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt'))	
+		file_handler = logging.FileHandler(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt'), encoding='utf8')	
 	else:
-		file_handler = logging.FileHandler(newLogName)
+		file_handler = logging.FileHandler(newLogName, encoding='utf8')
 else:
 	os.mkdir('.\log')
 	timestr = time.strftime('%Y-%m-%d__%H-%M-%S')
-	file_handler = logging.FileHandler(os.path.join('log', 'log_' + timestr + '.txt'))
-#create new log every time	
-
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(formatter)
-#set level and format to log into file
+	file_handler = logging.FileHandler(os.path.join(newLogName, encoding='utf8'))
 
 stream_handler = logging.StreamHandler()
-stream_handler.setLevel(logging.DEBUG)
 stream_handler.setFormatter(formatter)
-#set format and level for printing log messages to console 
+file_handler.setFormatter(formatter)
+#set format to both handlers
+
 
 logFile.addHandler(file_handler)
 logConsole.addHandler(stream_handler)
@@ -59,7 +52,7 @@ def prlog(level, message):
 	#both print and log messages
 	print(message)
 	getattr(logFile, level)(message)
-	#what is above means "logFile.level(message)" where message is method name which is known only by runtime. For example "logFile.info(message)"
+	#what is above means "logFile.level(message)" where message is method's name which is known only by runtime. For example "logFile.info(message)" where 'info' is coming from variable 
 
 def chooseFolder():
 	# used to check validity of file's path given by user
@@ -157,14 +150,15 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 		if path_A_File_wo_Root in pathsOfSnapB:
 			if snapA[key][0] == 'file': #compare time of creation of same files
 				correspondigFileInB = rootB + path_A_File_wo_Root
-				print(time.ctime(snapA[key][2]))
-				print(time.ctime(snapB[correspondigFileInB][2]))
-				prlog('info', snapA[key][2])
-				prlog('info', snapB[correspondigFileInB][2])
+				# logFile.info(key + '__' + time.ctime(snapA[key][2]))
+				# logFile.info(correspondigFileInB  + '__' + time.ctime(snapB[correspondigFileInB][2]))
+				# lofFile.info(time.ctime(snapB[correspondigFileInB][2]))
+				# prlog('info', snapA[key][2])
+				# prlog('info', snapB[correspondigFileInB][2])
 				if snapA[key][2] == snapB[correspondigFileInB][2]:
 					#if files has the same time of modofication
 					sameNameAndTimeItems.append(key)
-					logFile.info(key + ' and ' + correspondigFileInB + ' are the same.')
+					# logFile.info(key + ' and ' + correspondigFileInB + ' are the same.')
 					if snapA[key][1] != snapB[correspondigFileInB][1]:
 						raise RuntimeError('File ' + key + ' and file ' + correspondigFileInB + ' have same name and same modification time, but different size. It is impossible to figure out which one is newer automatically.')
 
@@ -183,9 +177,9 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 
 	#show files that don't exist in A but exists in B
 	prlog('info', '')
-	print('info', '###########################')
+	print('###########################')
 	prlog('info', firstFolder)
-	prlog('info', '###########################')
+	print('###########################')
 	prlog('info', str(len(sameNameAndTimeItems)) + ' equal files.')
 
 	prlog('info', str(len(notExistInB)) + ' files from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
@@ -211,11 +205,10 @@ if platform.node() == 'ZenBook3':
 	firstFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\A'
 	secondFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\B'
 elif platform.node() == 'AcerVNitro':
-	print('info', 'You are on dev laptop. Using default adressess for test.')	
 	firstFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\A'
 	secondFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\B'
 elif platform.node() == 'ASUSG751':
-	print('info', 'You are on dev laptop. Using default adressess for test.')	
+	prlog('info', 'You are on dev laptop. Using default adressess for test.')
 	firstFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\A'
 	secondFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\B'
 else:
