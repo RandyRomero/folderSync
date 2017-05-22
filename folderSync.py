@@ -52,7 +52,7 @@ def prlog(level, message):
 	#both print and log messages
 	print(message)
 	getattr(logFile, level)(message)
-	#what is above means "logFile.level(message)" where message is method's name which is known only by runtime. For example "logFile.info(message)" where 'info' is coming from variable 
+	#what is above means "logFile.level(message)" where level is method's name which is known only by runtime. For example "logFile.info(message)" where 'info' is coming from variable 
 
 def chooseFolder():
 	# used to check validity of file's path given by user
