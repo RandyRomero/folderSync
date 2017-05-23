@@ -48,11 +48,11 @@ logConsole.addHandler(stream_handler)
 #apply handler to this module (folderSync.py)
 
 
-def prlog(level, message):
-	#both print and log messages
-	print(message)
-	getattr(logFile, level)(message)
-	#what is above means "logFile.level(message)" where level is method's name which is known only by runtime. For example "logFile.info(message)" where 'info' is coming from variable 
+# def prlog(level, message):
+# 	#both print and log messages
+# 	print(message)
+# 	getattr(logFile, level)(message)
+# 	#what is above means "logFile.level(message)" where level is method's name which is known only by runtime. For example "logFile.info(message)" where 'info' is coming from variable 
 
 def chooseFolder():
 	# used to check validity of file's path given by user
@@ -71,15 +71,19 @@ def chooseFolder():
 def menuChooseFolders():
 	# let user choose folders and check them not to have the same path
 	while True:
-		prlog('Please, choose first folder to sync.')
+		print('Please, choose first folder to sync.')
+		loggerFile.info('Please, choose first folder to sync.')
 		firstFolder = chooseFolder()
-		prlog('Please, choose second folder to sync.')
+		print('Please, choose second folder to sync.')
+		logFile.info('Please, choose second folder to sync.')
 		secondFolder = chooseFolder()
 		if firstFolder == secondFolder:
-			prlog('\nPaths can\'t be equal. Start over')
+			print('\nPaths can\'t be equal. Start over')
+			logFile.info('\nPaths can\'t be equal. Start over')
 			continue
 		else:
-			prlog('\nPaths accepted. Start analyzing...\n')
+			print('\nPaths accepted. Start analyzing...\n')
+			logFile.info('\nPaths accepted. Start analyzing...\n')
 			break
 
 	return firstFolder, secondFolder			
@@ -94,7 +98,8 @@ def hasItEverBeenSynced(rootFolder):
 def getSnapshot(rootFolder):
 	# get all file and folder paths, 
 	# and collect file size and file time of modification
-	prlog('info', 'Getting snapshot of ' + rootFolder + '...')
+	print('Getting snapshot of ' + rootFolder + '...')
+	logFile.info('Getting snapshot of ' + rootFolder + '...')
 
 	foldersNumber = 0
 	filesNumber = 0
@@ -119,9 +124,13 @@ def getSnapshot(rootFolder):
 			#math.ceil for rounding float
 			filesNumber += 1
 
-	prlog('info', 'There are ' + str(foldersNumber) + ' folders and ' + 
+	print('There are ' + str(foldersNumber) + ' folders and ' + 
 		str(filesNumber) + ' files in ' + rootFolder)
-	prlog('info', 'Total size of ' + rootFolder + ' is ' + 
+	logFile.info('There are ' + str(foldersNumber) + ' folders and ' + 
+		str(filesNumber) + ' files in ' + rootFolder)
+	print('Total size of ' + rootFolder + ' is ' + 
+		str("{0:.0f}".format(totalSize / 1024 /1024)) + ' MB.\n')
+	logFile.info('Total size of ' + rootFolder + ' is ' + 
 		str("{0:.0f}".format(totalSize / 1024 /1024)) + ' MB.\n')
 
 	return currentSnapshot
@@ -176,21 +185,24 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 	######### result messages ########## 		
 
 	#show files that don't exist in A but exists in B
-	prlog('info', '')
+	print('')
 	print('###########################')
-	prlog('info', firstFolder)
+	print(firstFolder)
+	logFile.info(firstFolder)
 	print('###########################')
-	prlog('info', str(len(sameNameAndTimeItems)) + ' equal files.')
-
-	prlog('info', str(len(notExistInB)) + ' files from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
+	print(str(len(sameNameAndTimeItems)) + ' equal files.')
+	logFile.info(str(len(sameNameAndTimeItems)) + ' equal files.')
+	print(str(len(notExistInB)) + ' files from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
 	logFile.info('\n')
 	for path in notExistInB:
 		logFile.info(path + '\n')
 
-	prlog('info', str(len(toBeCopiedFromAtoB)) + ' files need to update in ' + secondFolder)
+	print(str(len(toBeCopiedFromAtoB)) + ' files need to update in ' + secondFolder)
+	logFile.info(str(len(toBeCopiedFromAtoB)) + ' files need to update in ' + secondFolder)
 	for path in toBeCopiedFromAtoB:
 		logFile.info(path + '\n')
-	prlog('info', str(len(toBeCopiedFromBtoA)) + ' files need to update in ' + firstFolder)
+	print(str(len(toBeCopiedFromBtoA)) + ' files need to update in ' + firstFolder)
+	logFile.info(str(len(toBeCopiedFromBtoA)) + ' files need to update in ' + firstFolder)
 	for path in toBeCopiedFromBtoA:
 		logFile.info(path + '\n')	
 
@@ -200,25 +212,34 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 # Scrip gets the name of PC in order to work on my several laptops without
 # typing paths for folders to sync
 
+def devLap():
+	logConsole.debug('You are on dev laptop. Using default adressess for test.')
+	logFile.debug('You are on dev laptop. Using default adressess for test.')
+
 if platform.node() == 'ZenBook3':
-	prlog('info', 'You are on dev laptop. Using default adressess for test.')
+	devLap()
 	firstFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\A'
 	secondFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\B'
 elif platform.node() == 'AcerVNitro':
+	devLap()
 	firstFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\A'
 	secondFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\B'
 elif platform.node() == 'ASUSG751':
-	prlog('info', 'You are on dev laptop. Using default adressess for test.')
+	devLap()
 	firstFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\A'
 	secondFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\B'
 else:
-	print('info', 'Unknown computer.')
+	logConsole.debug('Unknown computer.')
+	logFile.debug('Unknown computer.')
 	firstFolder, secondFolder = menuChooseFolders()
 
 firstFolderSynced = hasItEverBeenSynced(firstFolder)
-logFile.info(firstFolderSynced)
+logFile.debug(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
+logConsole.debug(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
+
 secondFolderSynced = hasItEverBeenSynced(secondFolder)
-logFile.info(secondFolderSynced)
+logFile.debug(secondFolder + ' Has been synced before? ' + str(secondFolderSynced))
+logConsole.debug(secondFolder + ' Has been synced before? ' + str(secondFolderSynced))
 
 
 snapshostFirstFolder = getSnapshot(firstFolder)
