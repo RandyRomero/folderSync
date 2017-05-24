@@ -140,6 +140,7 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 	#check A against B
 
 	notExistInB = []
+	samePathAndName = []
 	sameNameAndTimeItems = []
 	toBeCopiedFromBtoA = []
 	toBeCopiedFromAtoB = []
@@ -157,15 +158,13 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 		#get rid of root folder in path
 
 		if path_A_File_wo_Root in pathsOfSnapB:
+			
 			if snapA[key][0] == 'file': #compare time of creation of same files
+				samePathAndName.append(key)
 				correspondigFileInB = rootB + path_A_File_wo_Root
-				# logFile.info(key + '__' + time.ctime(snapA[key][2]))
-				# logFile.info(correspondigFileInB  + '__' + time.ctime(snapB[correspondigFileInB][2]))
-				# lofFile.info(time.ctime(snapB[correspondigFileInB][2]))
-				# prlog('info', snapA[key][2])
-				# prlog('info', snapB[correspondigFileInB][2])
+				
 				if snapA[key][2] == snapB[correspondigFileInB][2]:
-					#if files has the same time of modofication
+					#if files has the same time of modification
 					sameNameAndTimeItems.append(key)
 					# logFile.info(key + ' and ' + correspondigFileInB + ' are the same.')
 					if snapA[key][1] != snapB[correspondigFileInB][1]:
@@ -190,21 +189,36 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 	print(firstFolder)
 	logFile.info(firstFolder)
 	print('###########################')
-	print(str(len(sameNameAndTimeItems)) + ' equal files.')
-	logFile.info(str(len(sameNameAndTimeItems)) + ' equal files.')
+	
+	print(str(len(samePathAndName)) + ' equal files.')
+	logFile.info(str(len(samePathAndName)) +  ' equal files.')
+	for path in samePathAndName:
+		logFile.info(path)
+	logFile.info('\n')	
+
+	print(str(len(sameNameAndTimeItems)) + ' files don\'t need update.')
+	logFile.info(str(len(sameNameAndTimeItems)) + ' files don\'t need update.')
+	for path in sameNameAndTimeItems:
+		logFile.info(path)
+	logFile.info('\n')	
+
 	print(str(len(notExistInB)) + ' files from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
-	logFile.info('\n')
+	logFile.info(str(len(notExistInB)) + ' files from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
 	for path in notExistInB:
-		logFile.info(path + '\n')
+		logFile.info(path)
+	logFile.info('\n')	
 
 	print(str(len(toBeCopiedFromAtoB)) + ' files need to update in ' + secondFolder)
 	logFile.info(str(len(toBeCopiedFromAtoB)) + ' files need to update in ' + secondFolder)
 	for path in toBeCopiedFromAtoB:
-		logFile.info(path + '\n')
+		logFile.info(path)
+	logFile.info('\n')	
+
 	print(str(len(toBeCopiedFromBtoA)) + ' files need to update in ' + firstFolder)
 	logFile.info(str(len(toBeCopiedFromBtoA)) + ' files need to update in ' + firstFolder)
 	for path in toBeCopiedFromBtoA:
-		logFile.info(path + '\n')	
+		logFile.info(path)
+	logFile.info('\n')		
 
 # logFile = makeLogFile()
 
