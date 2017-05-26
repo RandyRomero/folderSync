@@ -139,12 +139,14 @@ def getSnapshot(rootFolder):
 def compareSnapshots(snapA, rootA, snapB, rootB):
 	#check A against B
 
+	notExistInA = []
 	notExistInB = []
 	samePathAndName = []
 	sameNameAndTimeItems = []
-	toBeCopiedFromBtoA = []
-	toBeCopiedFromAtoB = []
+	toBeUpdatedFromBtoA = []
+	toBeUpdatedFromAtoB = []
 	
+	pathsOfSnapA = []
 	pathsOfSnapB = [] 
 	for key in snapB.keys():
 		#create list of paths from second folder's snapshot
@@ -156,6 +158,7 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 	for key in snapA:
 		path_A_File_wo_Root = re.search(r'^([^\\]*)(\\.*)', key).group(2)
 		#get rid of root folder in path
+		pathsOfSnapA.append(path_A_File_wo_Root)
 
 		if path_A_File_wo_Root in pathsOfSnapB:
 			
@@ -173,13 +176,19 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 				elif snapA[key][2] < snapB[correspondigFileInB][2]:
 					#file in A newer than file in B -> add it to list to be copied from A to B
 					
-					toBeCopiedFromAtoB.append(key)
+					toBeUpdatedFromAtoB.append(key)
 				elif snapA[key][2] > snapB[correspondigFileInB][2]:
 					#file in A older than file in B -> add it to list to be copied from B to A
-					toBeCopiedFromBtoA.append(key)	
+					toBeUpdatedFromBtoA.append(key)	
 		else:
 			# if file doesn't exist in B -> add it in list to be copied from A
 			notExistInB.append(key)
+
+	for path in pathsOfSnapB:
+		if not path in pathsOfSnapA:
+			notExistInA.append(rootB + path)
+	#check which files from B exist in A		
+
 
 	######### result messages ########## 		
 
@@ -206,17 +215,23 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 	logFile.info(str(len(notExistInB)) + ' files from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
 	for path in notExistInB:
 		logFile.info(path)
-	logFile.info('\n')	
+	logFile.info('\n')
 
-	print(str(len(toBeCopiedFromAtoB)) + ' files need to update in ' + secondFolder)
-	logFile.info(str(len(toBeCopiedFromAtoB)) + ' files need to update in ' + secondFolder)
-	for path in toBeCopiedFromAtoB:
+	print(str(len(notExistInA)) + ' files from  ' + secondFolder + ' don\'t exist in ' + firstFolder)
+	logFile.info(str(len(notExistInA)) + ' files from  ' + secondFolder + ' don\'t exist in ' + firstFolder)
+	for path in notExistInA:
 		logFile.info(path)
 	logFile.info('\n')	
 
-	print(str(len(toBeCopiedFromBtoA)) + ' files need to update in ' + firstFolder)
-	logFile.info(str(len(toBeCopiedFromBtoA)) + ' files need to update in ' + firstFolder)
-	for path in toBeCopiedFromBtoA:
+	print(str(len(toBeUpdatedFromAtoB)) + ' files need to update in ' + secondFolder)
+	logFile.info(str(len(toBeUpdatedFromAtoB)) + ' files need to update in ' + secondFolder)
+	for path in toBeUpdatedFromAtoB:
+		logFile.info(path)
+	logFile.info('\n')	
+
+	print(str(len(toBeUpdatedFromBtoA)) + ' files need to update in ' + firstFolder)
+	logFile.info(str(len(toBeUpdatedFromBtoA)) + ' files need to update in ' + firstFolder)
+	for path in toBeUpdatedFromBtoA:
 		logFile.info(path)
 	logFile.info('\n')		
 
