@@ -5,7 +5,7 @@
 	But script should be able to sync in both ways. 
 	And keep track of changes in both folders.'''
 
-import logging, math, os, platform, time, send2trash, re
+import logging, math, os, platform, time, send2trash, sys, re
 
 logFile = logging.getLogger('fs1') 
 #create logger for this specific module for logging to file
@@ -48,11 +48,6 @@ logConsole.addHandler(stream_handler)
 #apply handler to this module (folderSync.py)
 
 
-# def prlog(level, message):
-# 	#both print and log messages
-# 	print(message)
-# 	getattr(logFile, level)(message)
-# 	#what is above means "logFile.level(message)" where level is method's name which is known only by runtime. For example "logFile.info(message)" where 'info' is coming from variable 
 
 def chooseFolder():
 	# used to check validity of file's path given by user
@@ -235,12 +230,13 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 
 
 def devLap():
-	#paths hardcoded for the sake of speed of testing
-	# Scrip gets the name of PC in order to work on my several laptops without
-	# typing paths for folders to sync
 
 	logConsole.debug('You are on dev laptop. Using default adressess for test.')
 	logFile.debug('You are on dev laptop. Using default adressess for test.')
+
+#paths hardcoded for the sake of speed of testing
+# Scrip gets the name of PC in order to work on my several laptops without
+# typing paths for folders to sync
 
 if platform.node() == 'ZenBook3':
 	devLap()
@@ -259,6 +255,7 @@ else:
 	logFile.debug('Unknown computer.')
 	firstFolder, secondFolder = menuChooseFolders()
 
+
 firstFolderSynced = hasItEverBeenSynced(firstFolder)
 logFile.debug(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
 logConsole.debug(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
@@ -276,9 +273,33 @@ rootSecondFolder = re.search(r'(\w+$)', secondFolder).group(0)
 #get names of root folders to be compared
 compareSnapshots(snapshostFirstFolder, rootFirstFolder, snapshostSecondFolder, rootSecondFolder)
 
+while True:
+	startSyncing = input('Do you want to sync these files? y/n: ').lower()
+	logFile.info('Do you want to sync these files? y/n: ')
+	if startSyncing == 'y':
+		#call function that handles syncing
+		break
+	elif startSyncing == 'n':
+		#exit script
+		print('Goodbye.')
+		logFile.info('Goodbye.')
+		sys.exit()
+	else:
+		print('Error of input. Try again.')
+		logFile.info('Error of input. Try again.')
+		continue	
 
-#TODO make menu to let user choose folders to sync
-# until then I am gonna set it manually at code to save some time while checking
 
 
 
+
+
+
+
+
+
+
+########## crap ##############
+
+# 	getattr(logFile, level)(message)
+# 	#what is above means "logFile.level(message)" where level is method's name which is known only by runtime. For example "logFile.info(message)" where 'info' is coming from variable 
