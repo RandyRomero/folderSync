@@ -190,9 +190,7 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 	#check which files from B exist in A		
 
 
-	######### result messages ########## 		
-
-	#show files that don't exist in A but exists in B
+	######### result messages to console and log file########## 		
 	print('')
 	print('###########################')
 	print(firstFolder)
@@ -235,13 +233,12 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 		logFile.info(path)
 	logFile.info('\n')		
 
-# logFile = makeLogFile()
-
-#paths hardcoded for the sake of speed of testing
-# Scrip gets the name of PC in order to work on my several laptops without
-# typing paths for folders to sync
 
 def devLap():
+	#paths hardcoded for the sake of speed of testing
+	# Scrip gets the name of PC in order to work on my several laptops without
+	# typing paths for folders to sync
+
 	logConsole.debug('You are on dev laptop. Using default adressess for test.')
 	logFile.debug('You are on dev laptop. Using default adressess for test.')
 
@@ -273,10 +270,11 @@ logConsole.debug(secondFolder + ' Has been synced before? ' + str(secondFolderSy
 
 snapshostFirstFolder = getSnapshot(firstFolder)
 snapshostSecondFolder = getSnapshot(secondFolder)
+#get all paths of all files and folders with properties from folders to be compared 
 rootFirstFolder = re.search(r'(\w+$)', firstFolder).group(0)
 rootSecondFolder = re.search(r'(\w+$)', secondFolder).group(0)
+#get names of root folders to be compared
 compareSnapshots(snapshostFirstFolder, rootFirstFolder, snapshostSecondFolder, rootSecondFolder)
-
 
 
 #TODO make menu to let user choose folders to sync
