@@ -199,8 +199,8 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 	logFile.info(firstFolder)
 	print('###########################')
 	
-	print(str(len(samePathAndName)) + ' equal files.')
-	logFile.info(str(len(samePathAndName)) +  ' equal files.')
+	print(str(len(samePathAndName)) + ' files that exist in both folders.')
+	logFile.info(str(len(samePathAndName)) +  ' files that exist in both folders.')
 	for path in samePathAndName:
 		logFile.info(path)
 	logFile.info('\n')	
