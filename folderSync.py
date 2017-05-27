@@ -5,7 +5,7 @@
 	But script should be able to sync in both ways. 
 	And keep track of changes in both folders.'''
 
-import logging, math, os, platform, time, send2trash, sys, re
+import logging, math, os, platform, shutil, time, send2trash, sys, re
 
 logFile = logging.getLogger('fs1') 
 #create logger for this specific module for logging to file
@@ -67,7 +67,7 @@ def menuChooseFolders():
 	# let user choose folders and check them not to have the same path
 	while True:
 		print('Please, choose first folder to sync.')
-		loggerFile.info('Please, choose first folder to sync.')
+		logFile.info('Please, choose first folder to sync.')
 		firstFolder = chooseFolder()
 		print('Please, choose second folder to sync.')
 		logFile.info('Please, choose second folder to sync.')
@@ -83,18 +83,18 @@ def menuChooseFolders():
 
 	return firstFolder, secondFolder			
 
-def hasItEverBeenSynced(rootFolder):
+def hasItEverBeenSynced(pathToRootFolder):
 	# check if there is already snapshot from previous sync
-	if os.path.exists(os.path.join(rootFolder, '.folderSync')):
+	if os.path.exists(os.path.join(pathToRootFolder, '.folderSync')):
 		return True
 	else:
 		return False	
 
-def getSnapshot(rootFolder):
+def getSnapshot(pathToRootFolder, rootFolder):
 	# get all file and folder paths, 
 	# and collect file size and file time of modification
-	print('Getting snapshot of ' + rootFolder + '...')
-	logFile.info('Getting snapshot of ' + rootFolder + '...')
+	print('Getting snapshot of ' + pathToRootFolder + '...')
+	logFile.info('Getting snapshot of ' + pathToRootFolder + '...')
 
 	foldersNumber = 0
 	filesNumber = 0
@@ -102,30 +102,32 @@ def getSnapshot(rootFolder):
 
 	currentSnapshot = {}
 
-	for root, folders, files in os.walk(rootFolder):
+	for root, folders, files in os.walk(pathToRootFolder):
 		# files = [x for x in files if not x[0] == '.']
 		# folders[:] = [x for x in folders if not x[0] == '.']
 		
 		for folder in folders:
-			folderPath = os.path.relpath(os.path.join(root, folder))
+			folderPath = re.search(r'{s}.*'.format(s=rootFolder), os.path.join(root, folder)).group(0)
+			# line above returns path that starts from chosen by user folder 
 			currentSnapshot[folderPath] = ['folder']
 			foldersNumber += 1
 		
 		for file in files:
-			filePath = os.path.relpath(os.path.join(root, file))
-			sizeOfCurrentFile = os.path.getsize(filePath)
+			filePath = re.search(r'{s}.*'.format(s=rootFolder), os.path.join(root, file)).group(0)
+			# line above returns path that starts from chosen by user folder 
+			sizeOfCurrentFile = os.path.getsize(os.path.join(root, file))
 			totalSize += sizeOfCurrentFile
-			currentSnapshot[filePath] = ['file', sizeOfCurrentFile, math.ceil(os.path.getmtime(filePath))]
+			currentSnapshot[filePath] = ['file', sizeOfCurrentFile, math.ceil(os.path.getmtime(os.path.join(root, file)))]
 			#math.ceil for rounding float
 			filesNumber += 1
 
 	print('There are ' + str(foldersNumber) + ' folders and ' + 
-		str(filesNumber) + ' files in ' + rootFolder)
+		str(filesNumber) + ' files in ' + pathToRootFolder)
 	logFile.info('There are ' + str(foldersNumber) + ' folders and ' + 
-		str(filesNumber) + ' files in ' + rootFolder)
-	print('Total size of ' + rootFolder + ' is ' + 
+		str(filesNumber) + ' files in ' + pathToRootFolder)
+	print('Total size of ' + pathToRootFolder + ' is ' + 
 		str("{0:.0f}".format(totalSize / 1024 /1024)) + ' MB.\n')
-	logFile.info('Total size of ' + rootFolder + ' is ' + 
+	logFile.info('Total size of ' + pathToRootFolder + ' is ' + 
 		str("{0:.0f}".format(totalSize / 1024 /1024)) + ' MB.\n')
 
 	return currentSnapshot
@@ -228,33 +230,46 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 		logFile.info(path)
 	logFile.info('\n')		
 
+	return notExistInA, notExistInB, toBeUpdatedFromBtoA, toBeUpdatedFromAtoB
+
+def syncFiles(compareResult, rootFirstFolder, rootSecondFolder):
+	#take lists with files to copy and copy them
+	notExistInA, notExistInB, toBeUpdatedFromBtoA, toBeUpdatedFromAtoB = compareResult
+
+	logFile.info('Strat syncing files...')
+	logConsole.info('Strat syncing files...')
+
+	# for file in notExistInA:
+	# 	pathToCopy = (rootFirstFolder + re.search(r'^([^\\]*)(\\.*)', file).group(2))
+	# 	shutil.copy(file, pathToCopy)
 
 def devLap():
 
 	logConsole.debug('You are on dev laptop. Using default adressess for test.')
 	logFile.debug('You are on dev laptop. Using default adressess for test.')
 
-#paths hardcoded for the sake of speed of testing
-# Scrip gets the name of PC in order to work on my several laptops without
-# typing paths for folders to sync
+# #paths hardcoded for the sake of speed of testing
+# # Scrip gets the name of PC in order to work on my several laptops without
+# # typing paths for folders to sync
 
-if platform.node() == 'ZenBook3':
-	devLap()
-	firstFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\A'
-	secondFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\B'
-elif platform.node() == 'AcerVNitro':
-	devLap()
-	firstFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\A'
-	secondFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\B'
-elif platform.node() == 'ASUSG751':
-	devLap()
-	firstFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\A'
-	secondFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\B'
-else:
-	logConsole.debug('Unknown computer.')
-	logFile.debug('Unknown computer.')
-	firstFolder, secondFolder = menuChooseFolders()
+# if platform.node() == 'ZenBook3':
+# 	devLap()
+# 	firstFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\A'
+# 	secondFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\B'
+# elif platform.node() == 'AcerVNitro':
+# 	devLap()
+# 	firstFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\A'
+# 	secondFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\B'
+# elif platform.node() == 'ASUSG751':
+# 	devLap()
+# 	firstFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\A'
+# 	secondFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\B'
+# else:
+# 	logConsole.debug('Unknown computer.')
+# 	logFile.debug('Unknown computer.')
+# 	firstFolder, secondFolder = menuChooseFolders()
 
+firstFolder, secondFolder = menuChooseFolders()
 
 firstFolderSynced = hasItEverBeenSynced(firstFolder)
 logFile.debug(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
@@ -264,14 +279,14 @@ secondFolderSynced = hasItEverBeenSynced(secondFolder)
 logFile.debug(secondFolder + ' Has been synced before? ' + str(secondFolderSynced))
 logConsole.debug(secondFolder + ' Has been synced before? ' + str(secondFolderSynced))
 
-
-snapshostFirstFolder = getSnapshot(firstFolder)
-snapshostSecondFolder = getSnapshot(secondFolder)
-#get all paths of all files and folders with properties from folders to be compared 
 rootFirstFolder = re.search(r'(\w+$)', firstFolder).group(0)
 rootSecondFolder = re.search(r'(\w+$)', secondFolder).group(0)
 #get names of root folders to be compared
-compareSnapshots(snapshostFirstFolder, rootFirstFolder, snapshostSecondFolder, rootSecondFolder)
+snapshostFirstFolder = getSnapshot(firstFolder, rootFirstFolder)
+snapshostSecondFolder = getSnapshot(secondFolder, rootSecondFolder)
+#get all paths of all files and folders with properties from folders to be compared 
+
+compareResult = compareSnapshots(snapshostFirstFolder, rootFirstFolder, snapshostSecondFolder, rootSecondFolder)
 
 while True:
 	startSyncing = input('Do you want to sync these files? y/n: ').lower()
