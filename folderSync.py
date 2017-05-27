@@ -142,6 +142,7 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 	notExistInB = []
 	samePathAndName = []
 	sameNameAndTimeItems = []
+	equalFiles = []
 	toBeUpdatedFromBtoA = []
 	toBeUpdatedFromAtoB = []
 	
@@ -168,21 +169,18 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 				samePathAndName.append(key)
 				correspondigFileInB = rootB + path_A_File_wo_Root
 				#put back root folder to path of file/folder in B
-				
-				if snapA[key][2] == snapB[correspondigFileInB][2]:
-					#if file have the same time of modification
-					sameNameAndTimeItems.append(key)
-					# logFile.info(key + ' and ' + correspondigFileInB + ' are the same.')
-					if snapA[key][1] != snapB[correspondigFileInB][1]:
-						raise RuntimeError('File ' + key + ' and file ' + correspondigFileInB + ' have same name and same modification time, but different size. It is impossible to figure out which one is newer automatically.')
-
-				elif snapA[key][2] < snapB[correspondigFileInB][2]:
-					#file in A newer than file in B -> add it to list to be copied from A to B
-					
-					toBeUpdatedFromAtoB.append(key)
-				elif snapA[key][2] > snapB[correspondigFileInB][2]:
-					#file in A older than file in B -> add it to list to be copied from B to A
-					toBeUpdatedFromBtoA.append(key)	
+				logConsole.debug('KEY IS ' + key)
+				with open(key) as f1:
+					with open(correspondigFileInB) as f2:
+						if f1.read() == f2.read():
+							equalFiles.append(key)
+						else:
+							if snapA[key][2] < snapB[correspondigFileInB][2]:
+								#file in A newer than file in B -> add it to list to be copied from A to B
+								toBeUpdatedFromAtoB.append(key)
+							elif snapA[key][2] > snapB[correspondigFileInB][2]:
+								#file in A older than file in B -> add it to list to be copied from B to A
+								toBeUpdatedFromBtoA.append(key)
 		else:
 			# if file doesn't exist in B -> add it in list to be copied from A
 			notExistInB.append(key)
@@ -206,9 +204,9 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 		logFile.info(path)
 	logFile.info('\n')	
 
-	print(str(len(sameNameAndTimeItems)) + ' files don\'t need update.')
-	logFile.info(str(len(sameNameAndTimeItems)) + ' files don\'t need update.')
-	for path in sameNameAndTimeItems:
+	print(str(len(equalFiles)) + ' files don\'t need update.')
+	logFile.info(str(len(equalFiles)) + ' files don\'t need update.')
+	for path in equalFiles:
 		logFile.info(path)
 	logFile.info('\n')	
 
