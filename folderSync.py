@@ -5,7 +5,9 @@
 	But script should be able to sync in both ways. 
 	And keep track of changes in both folders.'''
 
+from __future__ import with_statement
 import logging, math, os, platform, shutil, time, send2trash, sys, re
+
 
 logFile = logging.getLogger('fs1') 
 #create logger for this specific module for logging to file
@@ -155,16 +157,20 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 	for key in snapA:
 		path_A_File_wo_Root = re.search(r'^([^\\]*)(\\.*)', key).group(2)
 		#get rid of root folder in path
+
 		pathsOfSnapA.append(path_A_File_wo_Root)
+		# make list in order to use it after when we need to compare B to A
 
 		if path_A_File_wo_Root in pathsOfSnapB:
+			#if item with same path exists in both folders to be synced
 			
-			if snapA[key][0] == 'file': #compare time of creation of same files
+			if snapA[key][0] == 'file': #if item is file - compare them
 				samePathAndName.append(key)
 				correspondigFileInB = rootB + path_A_File_wo_Root
+				#put back root folder to path of file/folder in B
 				
 				if snapA[key][2] == snapB[correspondigFileInB][2]:
-					#if files has the same time of modification
+					#if file have the same time of modification
 					sameNameAndTimeItems.append(key)
 					# logFile.info(key + ' and ' + correspondigFileInB + ' are the same.')
 					if snapA[key][1] != snapB[correspondigFileInB][1]:
