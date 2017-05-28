@@ -109,7 +109,7 @@ def getSnapshot(pathToRootFolder, rootFolder):
 		# folders[:] = [x for x in folders if not x[0] == '.']
 		
 		for folder in folders:
-			allMatches = re.search(r'(.*)(({s})(.*))'.format(s=rootFolder), os.path.join(root, folder))
+			allMatches = re.search(r'(.*)(\\({s})\\(.*))'.format(s=rootFolder), os.path.join(root, folder))
 			fullPath = allMatches.group(0)
 			rootFolder = allMatches.group(3)
 			pathWithRoot = allMatches.group(2)
@@ -120,7 +120,7 @@ def getSnapshot(pathToRootFolder, rootFolder):
 			foldersNumber += 1
 		
 		for file in files:
-			allMatches = re.search(r'(.*)(({s})(.*))'.format(s=rootFolder), os.path.join(root, file))
+			allMatches = re.search(r'(.*)\\(({s})\\(.*))'.format(s=rootFolder), os.path.join(root, file))
 			fullPath = allMatches.group(0)
 			rootFolder = allMatches.group(3)
 			pathWithRoot = allMatches.group(2)
@@ -173,9 +173,12 @@ def compareSnapshots(snapA, snapB, rootA, rootB):
 			
 			if snapA[key][0] == 'file': #if item is file - compare them
 				samePathAndName.append(key)
-				correspondingFileInB = rootB + snapA[key][1][3]
+				# logConsole.debug('ROOT B IS: ' + rootB)
+				# logConsole.debug('snapA[key][1][3] IS: ' + snapA[key][1][3])
+				correspondingFileInB = os.path.join(rootB, snapA[key][1][3])
+				# logConsole.debug('CORRESPONDING FILE IN B IS: ' + correspondingFileInB)
 				#put back root folder to path of file/folder in B
-				# logConsole.debug('KEY IS ' + key)
+				logConsole.debug('KEY IS ' + key)
 				with open(snapA[key][1][0], 'rb') as f1:
 					with open(snapB[correspondingFileInB][1][0], 'rb') as f2:
 						if f1.read() == f2.read():
