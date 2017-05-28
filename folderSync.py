@@ -109,17 +109,27 @@ def getSnapshot(pathToRootFolder, rootFolder):
 		# folders[:] = [x for x in folders if not x[0] == '.']
 		
 		for folder in folders:
-			folderPath = re.search(r'{s}.*'.format(s=rootFolder), os.path.join(root, folder)).group(0)
-			# line above returns path that starts from chosen by user folder 
-			currentSnapshot[folderPath] = ['folder']
+			allMatches = re.search(r'(.*)(({s})(.*))'.format(s=rootFolder), os.path.join(root, folder))
+			fullPath = allMatches.group(0)
+			rootFolder = allMatches.group(3)
+			pathWithRoot = allMatches.group(2)
+			pathWOutRoot = allMatches.group(4)
+			allPaths = [fullPath, rootFolder, pathWithRoot, pathWOutRoot]
+ 
+			currentSnapshot[pathWithRoot] = ['folder', allPaths]
 			foldersNumber += 1
 		
 		for file in files:
-			filePath = re.search(r'{s}.*'.format(s=rootFolder), os.path.join(root, file)).group(0)
-			# line above returns path that starts from chosen by user folder 
-			sizeOfCurrentFile = os.path.getsize(os.path.join(root, file))
+			allMatches = re.search(r'(.*)(({s})(.*))'.format(s=rootFolder), os.path.join(root, file))
+			fullPath = allMatches.group(0)
+			rootFolder = allMatches.group(3)
+			pathWithRoot = allMatches.group(2)
+			pathWOutRoot = allMatches.group(4)
+			allPaths = [fullPath, rootFolder, pathWithRoot, pathWOutRoot]
+			
+			sizeOfCurrentFile = os.path.getsize(allPaths[0])
 			totalSize += sizeOfCurrentFile
-			currentSnapshot[filePath] = ['file', sizeOfCurrentFile, math.ceil(os.path.getmtime(os.path.join(root, file)))]
+			currentSnapshot[pathWithRoot] = ['file', allPaths, sizeOfCurrentFile, math.ceil(os.path.getmtime(allPaths[0]))]
 			#math.ceil for rounding float
 			filesNumber += 1
 
@@ -135,7 +145,7 @@ def getSnapshot(pathToRootFolder, rootFolder):
 	return currentSnapshot
 
 
-def compareSnapshots(snapA, rootA, snapB, rootB):
+def compareSnapshots(snapA, snapB, rootA, rootB):
 	#check A against B
 
 	notExistInA = []
@@ -149,40 +159,36 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 	pathsOfSnapA = []
 	pathsOfSnapB = [] 
 	for key in snapB.keys():
+		pathsOfSnapB.append(snapB[key][1][3])
 		#create list of paths from second folder's snapshot
-		path_B_File_wo_Root = re.search(r'^([^\\]*)(\\.*)', key).group(2)
-		#get rid of name of root folder in the path to compare only what is inside folders: get '\somefolder\somefile.ext' instead of 'rootfolder\somefolder\somefile.ext'
+		#get rid of name of root folder in the path to compare only what is inside folders: get '\somefolder\somefile.ext' instead of 'rootfolder\somefolder\somefile.ext' 	
 
-		pathsOfSnapB.append(path_B_File_wo_Root)
+	for key in snapA.keys():
+		pathsOfSnapA.append(snapA[key][1][3])
+		#create list of paths from second folder's snapshot
+		#get rid of name of root folder in the path to compare only what is inside folders: get '\somefolder\somefile.ext' instead of 'rootfolder\somefolder\somefile.ext' 	
 
-	for key in snapA:
-		path_A_File_wo_Root = re.search(r'^([^\\]*)(\\.*)', key).group(2)
-		#get rid of root folder in path
-
-		pathsOfSnapA.append(path_A_File_wo_Root)
-		# make list in order to use it after when we need to compare B to A
-
-		if path_A_File_wo_Root in pathsOfSnapB:
+		if snapA[key][1][3] in pathsOfSnapB:
 			#if item with same path exists in both folders to be synced
 			
 			if snapA[key][0] == 'file': #if item is file - compare them
 				samePathAndName.append(key)
-				correspondigFileInB = rootB + path_A_File_wo_Root
+				correspondingFileInB = rootB + snapA[key][1][3]
 				#put back root folder to path of file/folder in B
-				logConsole.debug('KEY IS ' + key)
-				with open(key) as f1:
-					with open(correspondigFileInB) as f2:
+				# logConsole.debug('KEY IS ' + key)
+				with open(snapA[key][1][0], 'rb') as f1:
+					with open(snapB[correspondingFileInB][1][0], 'rb') as f2:
 						if f1.read() == f2.read():
 							equalFiles.append(key)
 						else:
-							if snapA[key][2] < snapB[correspondigFileInB][2]:
+							if snapA[key][3] < snapB[correspondingFileInB][3]:
 								#file in A newer than file in B -> add it to list to be copied from A to B
 								toBeUpdatedFromAtoB.append(key)
-							elif snapA[key][2] > snapB[correspondigFileInB][2]:
+							elif snapA[key][3] > snapB[correspondingFileInB][3]:
 								#file in A older than file in B -> add it to list to be copied from B to A
 								toBeUpdatedFromBtoA.append(key)
 		else:
-			# if file doesn't exist in B -> add it in list to be copied from A
+            # if file doesn't exist in B -> add it in list to be copied from A
 			notExistInB.append(key)
 
 	for path in pathsOfSnapB:
@@ -232,7 +238,12 @@ def compareSnapshots(snapA, rootA, snapB, rootB):
 	logFile.info(str(len(toBeUpdatedFromBtoA)) + ' files need to update in ' + firstFolder)
 	for path in toBeUpdatedFromBtoA:
 		logFile.info(path)
-	logFile.info('\n')		
+	logFile.info('\n')
+
+	for path in pathsOfSnapB:
+		logFile.debug('ITEM IN B: ' + path)
+	for path in pathsOfSnapA:
+		logFile.debug('ITEM IN A: ' + path)			
 
 	return notExistInA, notExistInB, toBeUpdatedFromBtoA, toBeUpdatedFromAtoB
 
@@ -290,7 +301,7 @@ snapshostFirstFolder = getSnapshot(firstFolder, rootFirstFolder)
 snapshostSecondFolder = getSnapshot(secondFolder, rootSecondFolder)
 #get all paths of all files and folders with properties from folders to be compared 
 
-compareResult = compareSnapshots(snapshostFirstFolder, rootFirstFolder, snapshostSecondFolder, rootSecondFolder)
+compareResult = compareSnapshots(snapshostFirstFolder, snapshostSecondFolder, rootFirstFolder, rootSecondFolder)
 
 while True:
 	startSyncing = input('Do you want to sync these files? y/n: ').lower()
