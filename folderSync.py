@@ -105,26 +105,21 @@ def getSnapshot(pathToRootFolder, rootFolder):
 	currentSnapshot = {}
 
 	for root, folders, files in os.walk(pathToRootFolder):
-		# files = [x for x in files if not x[0] == '.']
-		# folders[:] = [x for x in folders if not x[0] == '.']
 		
 		for folder in folders:
-			allMatches = re.search(r'(.*)(\\({s})\\(.*))'.format(s=rootFolder), os.path.join(root, folder))
-			fullPath = allMatches.group(0)
-			rootFolder = allMatches.group(3)
-			pathWithRoot = allMatches.group(2)
-			pathWOutRoot = allMatches.group(4)
+			fullPath = os.path.join(root, folder)
+			pathWOutRoot = fullPath.split(pathToRootFolder + '\\')[1]
+			#subtract path to root folder from full path whereby get path to folder/file without root folder 
+			pathWithRoot = os.path.join(rootFolder, pathWOutRoot)
 			allPaths = [fullPath, rootFolder, pathWithRoot, pathWOutRoot]
  
 			currentSnapshot[pathWithRoot] = ['folder', allPaths]
 			foldersNumber += 1
 		
 		for file in files:
-			allMatches = re.search(r'(.*)\\(({s})\\(.*))'.format(s=rootFolder), os.path.join(root, file))
-			fullPath = allMatches.group(0)
-			rootFolder = allMatches.group(3)
-			pathWithRoot = allMatches.group(2)
-			pathWOutRoot = allMatches.group(4)
+			fullPath = os.path.join(root, file)
+			pathWOutRoot = fullPath.split(pathToRootFolder + '\\')[1]
+			pathWithRoot = os.path.join(rootFolder, pathWOutRoot)
 			allPaths = [fullPath, rootFolder, pathWithRoot, pathWOutRoot]
 			
 			sizeOfCurrentFile = os.path.getsize(allPaths[0])
