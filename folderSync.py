@@ -191,7 +191,7 @@ def compareSnapshots(snapA, snapB, rootA, rootB):
 
 	for path in pathsOfSnapB:
 		if not path in pathsOfSnapA:
-			notExistInA.append(rootB + path)
+			notExistInA.append(os.path.join(rootB, path))
 	#check which files from B exist in A		
 
 
@@ -202,46 +202,46 @@ def compareSnapshots(snapA, snapB, rootA, rootB):
 	logFile.info(firstFolder)
 	print('###########################')
 	
-	print(str(len(samePathAndName)) + ' files that exist in both folders.')
+	print(str(len(samePathAndName)) + ' item(s) that exist in both folders.')
 	logFile.info(str(len(samePathAndName)) +  ' files that exist in both folders.')
 	for path in samePathAndName:
 		logFile.info(path)
 	logFile.info('\n')	
 
-	print(str(len(equalFiles)) + ' files don\'t need update.')
+	print(str(len(equalFiles)) + ' item(s) don\'t need update.')
 	logFile.info(str(len(equalFiles)) + ' files don\'t need update.')
 	for path in equalFiles:
 		logFile.info(path)
 	logFile.info('\n')	
 
-	print(str(len(notExistInB)) + ' files from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
-	logFile.info(str(len(notExistInB)) + ' files from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
+	print(str(len(notExistInB)) + ' item(s) from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
+	logFile.info(str(len(notExistInB)) + ' items from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
 	for path in notExistInB:
 		logFile.info(path)
 	logFile.info('\n')
 
-	print(str(len(notExistInA)) + ' files from  ' + secondFolder + ' don\'t exist in ' + firstFolder)
-	logFile.info(str(len(notExistInA)) + ' files from  ' + secondFolder + ' don\'t exist in ' + firstFolder)
+	print(str(len(notExistInA)) + ' item(s) from  ' + secondFolder + ' don\'t exist in ' + firstFolder)
+	logFile.info(str(len(notExistInA)) + ' item(s) from  ' + secondFolder + ' don\'t exist in ' + firstFolder)
 	for path in notExistInA:
 		logFile.info(path)
 	logFile.info('\n')	
 
-	print(str(len(toBeUpdatedFromAtoB)) + ' files need to update in ' + secondFolder)
-	logFile.info(str(len(toBeUpdatedFromAtoB)) + ' files need to update in ' + secondFolder)
+	print(str(len(toBeUpdatedFromAtoB)) + ' item(s) need to update in ' + secondFolder)
+	logFile.info(str(len(toBeUpdatedFromAtoB)) + ' item(s) need to update in ' + secondFolder)
 	for path in toBeUpdatedFromAtoB:
 		logFile.info(path)
 	logFile.info('\n')	
 
-	print(str(len(toBeUpdatedFromBtoA)) + ' files need to update in ' + firstFolder)
-	logFile.info(str(len(toBeUpdatedFromBtoA)) + ' files need to update in ' + firstFolder)
+	print(str(len(toBeUpdatedFromBtoA)) + ' item(s) need to update in ' + firstFolder)
+	logFile.info(str(len(toBeUpdatedFromBtoA)) + ' item(s) need to update in ' + firstFolder)
 	for path in toBeUpdatedFromBtoA:
 		logFile.info(path)
 	logFile.info('\n')
 
-	for path in pathsOfSnapB:
-		logFile.debug('ITEM IN B: ' + path)
-	for path in pathsOfSnapA:
-		logFile.debug('ITEM IN A: ' + path)			
+	# for path in pathsOfSnapB:
+	# 	logFile.debug('ITEM IN B: ' + path)
+	# for path in pathsOfSnapA:
+	# 	logFile.debug('ITEM IN A: ' + path)			
 
 	return notExistInA, notExistInB, toBeUpdatedFromBtoA, toBeUpdatedFromAtoB
 
