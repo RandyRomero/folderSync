@@ -6,8 +6,10 @@
 	And keep track of changes in both folders.'''
 
 from __future__ import with_statement
-import logging, math, os, platform, shutil, time, send2trash, sys, re
+import logging, math, os, platform, re, shutil, shelve, send2trash, sys, time 
 
+
+############################ Set loggers ####################################
 
 logFile = logging.getLogger('fs1') 
 #create logger for this specific module for logging to file
@@ -21,10 +23,12 @@ logConsole.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(levelname)s %(asctime)s line %(lineno)s: %(message)s') 
 #define format of logging messages
 
+timestr = time.strftime('%Y-%m-%d__%Hh%Mm')
+newLogName = os.path.join('log', 'log_' + timestr + '.txt')
+
 if os.path.exists('.\log'):
 	''' create new log every time when script starts instead of writing in the same file '''
-	timestr = time.strftime('%Y-%m-%d__%Hh%Mm')
-	newLogName = os.path.join('log', 'log_' + timestr + '.txt')
+	
 	if os.path.exists(newLogName):
 		i = 2
 		while os.path.exists(os.path.join('log', 'log ' + timestr + 
@@ -36,7 +40,6 @@ if os.path.exists('.\log'):
 		file_handler = logging.FileHandler(newLogName, encoding='utf8')
 else:
 	os.mkdir('.\log')
-	timestr = time.strftime('%Y-%m-%d__%H-%M-%S')
 	file_handler = logging.FileHandler(os.path.join(newLogName, encoding='utf8'))
 
 stream_handler = logging.StreamHandler()
@@ -87,7 +90,7 @@ def menuChooseFolders():
 
 def hasItEverBeenSynced(pathToRootFolder):
 	# check if there is already snapshot from previous sync
-	if os.path.exists(os.path.join(pathToRootFolder, '.folderSync')):
+	if os.path.exists(os.path.join(pathToRootFolder, '.folderSyncSnapshot')):
 		return True
 	else:
 		return False	
@@ -95,8 +98,8 @@ def hasItEverBeenSynced(pathToRootFolder):
 def getSnapshot(pathToRootFolder, rootFolder):
 	# get all file and folder paths, 
 	# and collect file size and file time of modification
-	print('Getting snapshot of ' + pathToRootFolder + '...')
-	logFile.info('Getting snapshot of ' + pathToRootFolder + '...')
+	print('\nGetting snapshot of ' + pathToRootFolder + '...')
+	logFile.info('\nGetting snapshot of ' + pathToRootFolder + '...')
 
 	foldersNumber = 0
 	filesNumber = 0
@@ -105,8 +108,12 @@ def getSnapshot(pathToRootFolder, rootFolder):
 	currentSnapshot = {}
 
 	for root, folders, files in os.walk(pathToRootFolder):
-		
+
+		folders[:] = [x for x in folders if not x == '.folderSyncSnapshot']
+		#only add to list folders that not '.folderSyncSnapshot'
+
 		for folder in folders:
+				
 			fullPath = os.path.join(root, folder)
 			pathWOutRoot = fullPath.split(pathToRootFolder + '\\')[1]
 			#subtract path to root folder from full path whereby get path to folder/file without root folder 
@@ -160,8 +167,7 @@ def compareSnapshots(snapA, snapB, rootA, rootB):
 
 	for key in snapA.keys():
 		pathsOfSnapA.append(snapA[key][1][3])
-		#create list of paths from second folder's snapshot
-		#get rid of name of root folder in the path to compare only what is inside folders: get '\somefolder\somefile.ext' instead of 'rootfolder\somefolder\somefile.ext' 	
+		# --//-- 	
 
 		if snapA[key][1][3] in pathsOfSnapB:
 			#if item with same path exists in both folders to be synced
@@ -249,8 +255,8 @@ def syncFiles(compareResult, rootFirstFolder, rootSecondFolder):
 	#take lists with files to copy and copy them
 	notExistInA, notExistInB, toBeUpdatedFromBtoA, toBeUpdatedFromAtoB = compareResult
 
-	logFile.info('Strat syncing files...')
-	logConsole.info('Strat syncing files...')
+	logFile.info('Start syncing files...')
+	logConsole.info('Start syncing files...')
 
 	# for file in notExistInA:
 	# 	pathToCopy = (rootFirstFolder + re.search(r'^([^\\]*)(\\.*)', file).group(2))
@@ -283,7 +289,6 @@ def devLap():
 # 	firstFolder, secondFolder = menuChooseFolders()
 
 firstFolder, secondFolder = menuChooseFolders()
-
 firstFolderSynced = hasItEverBeenSynced(firstFolder)
 logFile.debug(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
 logConsole.debug(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
@@ -301,27 +306,50 @@ snapshostSecondFolder = getSnapshot(secondFolder, rootSecondFolder)
 
 compareResult = compareSnapshots(snapshostFirstFolder, snapshostSecondFolder, rootFirstFolder, rootSecondFolder)
 
-while True:
-	startSyncing = input('Do you want to sync these files? y/n: ').lower()
-	logFile.info('Do you want to sync these files? y/n: ')
-	if startSyncing == 'y':
-		#call function that handles syncing
-		break
-	elif startSyncing == 'n':
-		#exit script
-		print('Goodbye.')
-		logFile.info('Goodbye.')
-		sys.exit()
+
+################### Syncing section: copy and delete items ###################
+
+# while True:
+# 	startSyncing = input('Do you want to sync these files? y/n: ').lower()
+# 	logFile.info('Do you want to sync these files? y/n: ')
+# 	if startSyncing == 'y':
+# 		#call function that handles syncing
+# 		break
+# 	elif startSyncing == 'n':
+# 		#exit script
+# 		print('Goodbye.')
+# 		logFile.info('Goodbye.')
+# 		sys.exit()
+# 	else:
+# 		print('Error of input. Try again.')
+# 		logFile.info('Error of input. Try again.')
+# 		continue	
+
+'''TODO: some shutil magic here ''' 
+
+def storeSnapshotBerofeExit(folderToTakeSnapshot, rootFolder, folderSynced):
+	'''Store state of folder to be synced after it was synced on storage'''
+
+	if folderSynced:
+		shelFile = shelve.open(os.path.join(folderToTakeSnapshot, '.folderSyncSnapshot', 'snapshot'))
 	else:
-		print('Error of input. Try again.')
-		logFile.info('Error of input. Try again.')
-		continue	
+		os.mkdir(os.path.join(folderToTakeSnapshot, '.folderSyncSnapshot'))
+		shelFile = shelve.open(os.path.join(folderToTakeSnapshot, '.folderSyncSnapshot', 'snapshot'))
+
+	snapshot = getSnapshot(folderToTakeSnapshot, rootFolder)
+	
+	shelFile['path'] = folderToTakeSnapshot
+	shelFile['snapshot'] = snapshot
+	shelFile['date'] = timestr
+
+	print('Snapshot of ' + rootFolder + ' was stored in ' + folderToTakeSnapshot + ' at ' + timestr)
+	logFile.info('Snapshot of ' + rootFolder + ' was stored in ' + folderToTakeSnapshot + ' at ' + timestr)
+
+	shelFile.close()
 
 
-
-
-
-
+storeSnapshotBerofeExit(firstFolder, rootFirstFolder, firstFolderSynced)
+storeSnapshotBerofeExit(secondFolder, rootSecondFolder, secondFolderSynced)
 
 
 
