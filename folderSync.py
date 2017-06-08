@@ -146,13 +146,14 @@ def getSnapshot(pathToRootFolder, rootFolder):
 
 	return currentSnapshot
 
-def getChangesBetweenStatesOFFolders(pathToFolder, folderSnapshot):
+def getChangesBetweenStatesOFFolders(pathToFolder, rootOfPath):
 	try:
 		shelFile = shelve.open(os.path.join(pathToFolder, '.folderSyncSnapshot', 'snapshot'))
 	except:
 		print('Can\'t open stored snapshot. Exit.')
 		sys.exit()
 
+	folderSnapshot = getSnapshot(pathToFolder, rootOfPath)
 	previousSnapshot = shelFile['snapshot']
 
 	pathOfPrevSnapshot = []
@@ -169,7 +170,6 @@ def getChangesBetweenStatesOFFolders(pathToFolder, folderSnapshot):
 		pathOfPrevSnapshot.append(previousSnapshot[key][1][3])
 
 		if previousSnapshot[key][1][3] not in pathOfCurrentSnapshot:
-			# print(key + ' WAS REMOVED')
 			logFile.info(key + ' WAS REMOVED')
 			itemWasRemoved.append(key)
 			itemWasRemovedCount += 1
@@ -191,8 +191,8 @@ def getChangesBetweenStatesOFFolders(pathToFolder, folderSnapshot):
 	print()
 	logFile.info('\n')
 
-def compareSnapshots(snapA, snapB, rootA, rootB):
-	#check A against B
+def compareSnapshotsFirstTime(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder):
+	'''compare files in binary mode if folders haven't been synced before'''
 
 	notExistInA = []
 	notExistInB = []
@@ -204,6 +204,11 @@ def compareSnapshots(snapA, snapB, rootA, rootB):
 	
 	pathsOfSnapA = []
 	pathsOfSnapB = [] 
+	
+	snapA = getSnapshot(firstFolder, rootFirstFolder)
+	snapB = getSnapshot(secondFolder, rootSecondFolder)
+
+	#check A against B
 	for key in snapB.keys():
 		pathsOfSnapB.append(snapB[key][1][3])
 		#create list of paths from second folder's snapshot
@@ -220,7 +225,7 @@ def compareSnapshots(snapA, snapB, rootA, rootB):
 				samePathAndName.append(key)
 				# logConsole.debug('ROOT B IS: ' + rootB)
 				# logConsole.debug('snapA[key][1][3] IS: ' + snapA[key][1][3])
-				correspondingFileInB = os.path.join(rootB, snapA[key][1][3])
+				correspondingFileInB = os.path.join(rootSecondFolder, snapA[key][1][3])
 				# logConsole.debug('CORRESPONDING FILE IN B IS: ' + correspondingFileInB)
 				#put back root folder to path of file/folder in B
 				print('Comparing files... ' + snapA[key][1][3])
@@ -241,7 +246,7 @@ def compareSnapshots(snapA, snapB, rootA, rootB):
 
 	for path in pathsOfSnapB:
 		if not path in pathsOfSnapA:
-			notExistInA.append(os.path.join(rootB, path))
+			notExistInA.append(os.path.join(rootSecondFolder, path))
 	#check which files from B exist in A		
 
 
@@ -345,17 +350,22 @@ logConsole.debug(secondFolder + ' Has been synced before? ' + str(secondFolderSy
 rootFirstFolder = re.search(r'(\w+$)', firstFolder).group(0)
 rootSecondFolder = re.search(r'(\w+$)', secondFolder).group(0)
 #get names of root folders to be compared
-snapshotFirstFolder = getSnapshot(firstFolder, rootFirstFolder)
-snapshotSecondFolder = getSnapshot(secondFolder, rootSecondFolder)
+# snapshotFirstFolder = getSnapshot(firstFolder, rootFirstFolder)
+# snapshotSecondFolder = getSnapshot(secondFolder, rootSecondFolder)
 #get all paths of all files and folders with properties from folders to be compared 
 
 if firstFolderSynced:
-	getChangesBetweenStatesOFFolders(firstFolder, snapshotFirstFolder)
+	getChangesBetweenStatesOFFolders(firstFolder, rootFirstFolder)
 
 if secondFolderSynced:
-	getChangesBetweenStatesOFFolders(secondFolder, snapshotSecondFolder)	
+	getChangesBetweenStatesOFFolders(secondFolder, rootSecondFolder)
 
-compareResult = compareSnapshots(snapshotFirstFolder, snapshotSecondFolder, rootFirstFolder, rootSecondFolder)
+if firstFolderSynced and secondFolderSynced:
+	print('There should be function that compare folders if they already been compared')
+else:
+	compareResult = compareSnapshotsFirstTime(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder)			
+
+
 
 
 ################### Syncing section: copy and delete items ###################
