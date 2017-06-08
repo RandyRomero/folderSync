@@ -140,7 +140,7 @@ def getSnapshot(pathToRootFolder, rootFolder):
 	logFile.info('There are ' + str(foldersNumber) + ' folders and ' + 
 		str(filesNumber) + ' files in ' + pathToRootFolder)
 	print('Total size of ' + pathToRootFolder + ' is ' + 
-		str("{0:.0f}".format(totalSize / 1024 /1024)) + ' MB.\n')
+		str("{0:.0f}".format(totalSize / 1024 /1024)) + ' MB.')
 	logFile.info('Total size of ' + pathToRootFolder + ' is ' + 
 		str("{0:.0f}".format(totalSize / 1024 /1024)) + ' MB.\n')
 
@@ -188,7 +188,8 @@ def getChangesBetweenStatesOFFolders(pathToFolder, folderSnapshot):
 	
 	print('There are ' + str(newItemCount) + ' new items')
 	logFile.info('There are ' + str(newItemCount) + ' new items')
-
+	print()
+	logFile.info('\n')
 
 def compareSnapshots(snapA, snapB, rootA, rootB):
 	#check A against B
@@ -222,7 +223,7 @@ def compareSnapshots(snapA, snapB, rootA, rootB):
 				correspondingFileInB = os.path.join(rootB, snapA[key][1][3])
 				# logConsole.debug('CORRESPONDING FILE IN B IS: ' + correspondingFileInB)
 				#put back root folder to path of file/folder in B
-				logConsole.debug('KEY IS ' + key)
+				print('Comparing files... ' + snapA[key][1][3])
 				with open(snapA[key][1][0], 'rb') as f1:
 					with open(snapB[correspondingFileInB][1][0], 'rb') as f2:
 						if f1.read() == f2.read():
