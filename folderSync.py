@@ -150,10 +150,10 @@ def getChangesBetweenStatesOFFolders(pathToFolder, folderSnapshot):
 	try:
 		shelFile = shelve.open(os.path.join(pathToFolder, '.folderSyncSnapshot', 'snapshot'))
 	except:
-		print('Can\'t open stored snapshot. Exit')
-		sys.exit()	
+		print('Can\'t open stored snapshot. Exit.')
+		sys.exit()
 
-	previousSnapshot = shelfile['snapshot']
+	previousSnapshot = shelFile['snapshot']
 
 	pathOfPrevSnapshot = []
 	pathOfCurrentSnapshot = []
@@ -168,24 +168,26 @@ def getChangesBetweenStatesOFFolders(pathToFolder, folderSnapshot):
 	for key in previousSnapshot.keys():
 		pathOfPrevSnapshot.append(previousSnapshot[key][1][3])
 
-		if key not in pathOfCurrentSnapshot():
-			print(key + ' WAS REMOVED')
+		if previousSnapshot[key][1][3] not in pathOfCurrentSnapshot:
+			# print(key + ' WAS REMOVED')
 			logFile.info(key + ' WAS REMOVED')
 			itemWasRemoved.append(key)
 			itemWasRemovedCount += 1
 
-	for path in pathOfCurrentSnapshot():
+	for path in pathOfCurrentSnapshot:
 		if path not in pathOfPrevSnapshot:
-			print(path + ' IS NEW ITEM')
+			# print(path + ' IS NEW ITEM')
 			logFile.info(path + ' IS NEW ITEM')
 			newItem.append(path)
 			newItemCount += 1
 
-	print(itemWasRemovedCount + ' items were removed')
-	logFile.info(itemWasRemovedCount + ' items were removed')
+	print('\n' + pathToFolder)
+	logFile.info('\n' + pathToFolder)
+	print(str(itemWasRemovedCount) + ' items were removed')
+	logFile.info(str(itemWasRemovedCount) + ' items were removed')
 	
-	print('There are ' + newItemCount + ' new items')
-	logFile.info('There are ' + newItemCount + ' new items')
+	print('There are ' + str(newItemCount) + ' new items')
+	logFile.info('There are ' + str(newItemCount) + ' new items')
 
 
 def compareSnapshots(snapA, snapB, rootA, rootB):
@@ -347,10 +349,10 @@ snapshotSecondFolder = getSnapshot(secondFolder, rootSecondFolder)
 #get all paths of all files and folders with properties from folders to be compared 
 
 if firstFolderSynced:
-	getChangesBetweenStatesOFFolders(firstFolderSynced, snapshotFirstFolder)
+	getChangesBetweenStatesOFFolders(firstFolder, snapshotFirstFolder)
 
 if secondFolderSynced:
-	getChangesBetweenStatesOFFolders(secondFolderSynced, snapshotSecondFolder)	
+	getChangesBetweenStatesOFFolders(secondFolder, snapshotSecondFolder)	
 
 compareResult = compareSnapshots(snapshotFirstFolder, snapshotSecondFolder, rootFirstFolder, rootSecondFolder)
 
