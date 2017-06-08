@@ -146,6 +146,47 @@ def getSnapshot(pathToRootFolder, rootFolder):
 
 	return currentSnapshot
 
+def getChangesBetweenStatesOFFolders(pathToFolder, folderSnapshot):
+	try:
+		shelFile = shelve.open(os.path.join(pathToFolder, '.folderSyncSnapshot', 'snapshot'))
+	except:
+		print('Can\'t open stored snapshot. Exit')
+		sys.exit()	
+
+	previousSnapshot = shelfile['snapshot']
+
+	pathOfPrevSnapshot = []
+	pathOfCurrentSnapshot = []
+	itemWasRemoved = []
+	itemWasRemovedCount = 0
+	newItem = []
+	newItemCount = 0
+
+	for key in folderSnapshot.keys():
+		pathOfCurrentSnapshot.append(folderSnapshot[key][1][3])
+
+	for key in previousSnapshot.keys():
+		pathOfPrevSnapshot.append(previousSnapshot[key][1][3])
+
+		if key not in pathOfCurrentSnapshot():
+			print(key + ' WAS REMOVED')
+			logFile.info(key + ' WAS REMOVED')
+			itemWasRemoved.append(key)
+			itemWasRemovedCount += 1
+
+	for path in pathOfCurrentSnapshot():
+		if path not in pathOfPrevSnapshot:
+			print(path + ' IS NEW ITEM')
+			logFile.info(path + ' IS NEW ITEM')
+			newItem.append(path)
+			newItemCount += 1
+
+	print(itemWasRemovedCount + ' items were removed')
+	logFile.info(itemWasRemovedCount + ' items were removed')
+	
+	print('There are ' + newItemCount + ' new items')
+	logFile.info('There are ' + newItemCount + ' new items')
+
 
 def compareSnapshots(snapA, snapB, rootA, rootB):
 	#check A against B
@@ -289,6 +330,7 @@ def devLap():
 # 	firstFolder, secondFolder = menuChooseFolders()
 
 firstFolder, secondFolder = menuChooseFolders()
+
 firstFolderSynced = hasItEverBeenSynced(firstFolder)
 logFile.debug(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
 logConsole.debug(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
@@ -300,11 +342,17 @@ logConsole.debug(secondFolder + ' Has been synced before? ' + str(secondFolderSy
 rootFirstFolder = re.search(r'(\w+$)', firstFolder).group(0)
 rootSecondFolder = re.search(r'(\w+$)', secondFolder).group(0)
 #get names of root folders to be compared
-snapshostFirstFolder = getSnapshot(firstFolder, rootFirstFolder)
-snapshostSecondFolder = getSnapshot(secondFolder, rootSecondFolder)
+snapshotFirstFolder = getSnapshot(firstFolder, rootFirstFolder)
+snapshotSecondFolder = getSnapshot(secondFolder, rootSecondFolder)
 #get all paths of all files and folders with properties from folders to be compared 
 
-compareResult = compareSnapshots(snapshostFirstFolder, snapshostSecondFolder, rootFirstFolder, rootSecondFolder)
+if firstFolderSynced:
+	getChangesBetweenStatesOFFolders(firstFolderSynced, snapshotFirstFolder)
+
+if secondFolderSynced:
+	getChangesBetweenStatesOFFolders(secondFolderSynced, snapshotSecondFolder)	
+
+compareResult = compareSnapshots(snapshotFirstFolder, snapshotSecondFolder, rootFirstFolder, rootSecondFolder)
 
 
 ################### Syncing section: copy and delete items ###################
