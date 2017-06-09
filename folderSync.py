@@ -147,6 +147,10 @@ def getSnapshot(pathToRootFolder, rootFolder):
 	return currentSnapshot
 
 def getChangesBetweenStatesOFFolders(pathToFolder, rootOfPath):
+	'''Compare folder's snapshot that was stored in .folderSyncSnapshot 
+	folder during last syncing with fresh snashot that is going to be taken within this function. It needs to figure out which files were removed in order not to acquire it from not yet updated folder again'''
+
+
 	try:
 		shelFile = shelve.open(os.path.join(pathToFolder, '.folderSyncSnapshot', 'snapshot'))
 	except:
@@ -191,7 +195,7 @@ def getChangesBetweenStatesOFFolders(pathToFolder, rootOfPath):
 	print()
 	logFile.info('\n')
 
-def compareSnapshotsFirstTime(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder):
+def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder):
 	'''compare files in binary mode if folders haven't been synced before'''
 
 	notExistInA = []
@@ -361,30 +365,30 @@ if secondFolderSynced:
 	getChangesBetweenStatesOFFolders(secondFolder, rootSecondFolder)
 
 if firstFolderSynced and secondFolderSynced:
-	print('There should be function that compare folders if they already been compared')
+	print('There should be function that compare folders if they have already been compared')
 else:
-	compareResult = compareSnapshotsFirstTime(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder)			
+	compareResult = lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder)			
 
 
 
 
 ################### Syncing section: copy and delete items ###################
 
-# while True:
-# 	startSyncing = input('Do you want to sync these files? y/n: ').lower()
-# 	logFile.info('Do you want to sync these files? y/n: ')
-# 	if startSyncing == 'y':
-# 		#call function that handles syncing
-# 		break
-# 	elif startSyncing == 'n':
-# 		#exit script
-# 		print('Goodbye.')
-# 		logFile.info('Goodbye.')
-# 		sys.exit()
-# 	else:
-# 		print('Error of input. Try again.')
-# 		logFile.info('Error of input. Try again.')
-# 		continue	
+while True:
+	startSyncing = input('Do you want to sync these files? y/n: ').lower()
+	logFile.info('Do you want to sync these files? y/n: ')
+	if startSyncing == 'y':
+		#call function that handles syncing
+		break
+	elif startSyncing == 'n':
+		#exit script
+		print('Goodbye.')
+		logFile.info('Goodbye.')
+		sys.exit()
+	else:
+		print('Error of input. Try again.')
+		logFile.info('Error of input. Try again.')
+		continue	
 
 '''TODO: some shutil magic here ''' 
 
