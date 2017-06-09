@@ -205,6 +205,12 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 	equalFiles = []
 	toBeUpdatedFromBtoA = []
 	toBeUpdatedFromAtoB = []
+	''' in each list script adds two version of path to file: 
+	first (key) with root folder, second (snapA[key][1][0]]) with full path.
+	First is shorter and for logs, 
+	second is full and for operations of copying etc
+	Below it looks like samePathAndName.append([key, snapA[key][1][0]])
+	'''
 	
 	pathsOfSnapA = []
 	pathsOfSnapB = [] 
@@ -226,9 +232,7 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 			#if item with same path exists in both folders to be synced
 			
 			if snapA[key][0] == 'file': #if item is file - compare them
-				samePathAndName.append(key)
-				# logConsole.debug('ROOT B IS: ' + rootB)
-				# logConsole.debug('snapA[key][1][3] IS: ' + snapA[key][1][3])
+				samePathAndName.append([key, snapA[key][1][0]])
 				correspondingFileInB = os.path.join(rootSecondFolder, snapA[key][1][3])
 				# logConsole.debug('CORRESPONDING FILE IN B IS: ' + correspondingFileInB)
 				#put back root folder to path of file/folder in B
@@ -236,21 +240,21 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 				with open(snapA[key][1][0], 'rb') as f1:
 					with open(snapB[correspondingFileInB][1][0], 'rb') as f2:
 						if f1.read() == f2.read():
-							equalFiles.append(key)
+							equalFiles.append([key, snapA[key][1][0]])
 						else:
 							if snapA[key][3] < snapB[correspondingFileInB][3]:
 								#file in A newer than file in B -> add it to list to be copied from A to B
-								toBeUpdatedFromAtoB.append(key)
+								toBeUpdatedFromAtoB.append([key, snapA[key][1][0]])
 							elif snapA[key][3] > snapB[correspondingFileInB][3]:
 								#file in A older than file in B -> add it to list to be copied from B to A
-								toBeUpdatedFromBtoA.append(key)
+								toBeUpdatedFromBtoA.append([key, snapA[key][1][0]])
 		else:
             # if file doesn't exist in B -> add it in list to be copied from A
-			notExistInB.append(key)
+			notExistInB.append([key, snapA[key][1][0]])
 
 	for path in pathsOfSnapB:
 		if not path in pathsOfSnapA:
-			notExistInA.append(os.path.join(rootSecondFolder, path))
+			notExistInA.append([os.path.join(rootSecondFolder, path), os.path.join(rootSecondFolder, path)])
 	#check which files from B exist in A		
 
 
@@ -264,37 +268,37 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 	print(str(len(samePathAndName)) + ' item(s) that exist in both folders.')
 	logFile.info(str(len(samePathAndName)) +  ' files that exist in both folders.')
 	for path in samePathAndName:
-		logFile.info(path)
+		logFile.info(path[0])
 	logFile.info('\n')	
 
 	print(str(len(equalFiles)) + ' item(s) don\'t need update.')
 	logFile.info(str(len(equalFiles)) + ' files don\'t need update.')
 	for path in equalFiles:
-		logFile.info(path)
+		logFile.info(path[0])
 	logFile.info('\n')	
 
 	print(str(len(notExistInB)) + ' item(s) from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
 	logFile.info(str(len(notExistInB)) + ' items from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
 	for path in notExistInB:
-		logFile.info(path)
+		logFile.info(path[0])
 	logFile.info('\n')
 
 	print(str(len(notExistInA)) + ' item(s) from  ' + secondFolder + ' don\'t exist in ' + firstFolder)
 	logFile.info(str(len(notExistInA)) + ' item(s) from  ' + secondFolder + ' don\'t exist in ' + firstFolder)
 	for path in notExistInA:
-		logFile.info(path)
+		logFile.info(path[0])
 	logFile.info('\n')	
 
 	print(str(len(toBeUpdatedFromAtoB)) + ' item(s) need to update in ' + secondFolder)
 	logFile.info(str(len(toBeUpdatedFromAtoB)) + ' item(s) need to update in ' + secondFolder)
 	for path in toBeUpdatedFromAtoB:
-		logFile.info(path)
+		logFile.info(path[0])
 	logFile.info('\n')	
 
 	print(str(len(toBeUpdatedFromBtoA)) + ' item(s) need to update in ' + firstFolder)
 	logFile.info(str(len(toBeUpdatedFromBtoA)) + ' item(s) need to update in ' + firstFolder)
 	for path in toBeUpdatedFromBtoA:
-		logFile.info(path)
+		logFile.info(path[0])
 	logFile.info('\n')
 
 	# for path in pathsOfSnapB:
@@ -378,19 +382,16 @@ while True:
 	startSyncing = input('Do you want to sync these files? y/n: ').lower()
 	logFile.info('Do you want to sync these files? y/n: ')
 	if startSyncing == 'y':
-		#call function that handles syncing
+		syncFiles()
 		break
 	elif startSyncing == 'n':
-		#exit script
-		print('Goodbye.')
-		logFile.info('Goodbye.')
-		sys.exit()
+		#continue without copy/remove files
+		break
 	else:
 		print('Error of input. Try again.')
 		logFile.info('Error of input. Try again.')
 		continue	
 
-'''TODO: some shutil magic here ''' 
 
 def storeSnapshotBerofeExit(folderToTakeSnapshot, rootFolder, folderSynced):
 	'''Store state of folder to be synced after it was synced on storage'''
@@ -416,7 +417,8 @@ def storeSnapshotBerofeExit(folderToTakeSnapshot, rootFolder, folderSynced):
 storeSnapshotBerofeExit(firstFolder, rootFirstFolder, firstFolderSynced)
 storeSnapshotBerofeExit(secondFolder, rootSecondFolder, secondFolderSynced)
 
-
+print('Goodbye.')
+logFile.info('Goodbye.')
 
 
 
