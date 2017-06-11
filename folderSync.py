@@ -6,8 +6,9 @@
 	And keep track of changes in both folders.'''
 
 from __future__ import with_statement
-import logging, math, os, platform, re, shutil, shelve, send2trash, sys, time 
-
+import logging, math, os, re, shutil, shelve, sys, time 
+#import platform
+#import send2trash
 
 ############################ Set loggers ####################################
 
@@ -59,13 +60,16 @@ def chooseFolder():
 	while True:
 		pathToFolder = input('Path: ')
 		if not os.path.exists(pathToFolder):
-			prlog('This folder doesn\'t exist. Write another one.')
+			print('This folder doesn\'t exist. Write another one.')
+			logFile.info('This folder doesn\'t exist. Write another one.')
 			continue
 		if not os.path.isdir(pathToFolder):
-			prlog('You should denote path to folder, not to file. Try again.')
+			print('You should denote path to folder, not to file. Try again.')
+			logFile.info('You should denote path to folder, not to file. Try again.')
 			continue	
 		elif os.path.exists(pathToFolder) and os.path.isdir(pathToFolder):
 			print('Got it!')
+			logFile.info('Got it!')
 			return pathToFolder
 
 def menuChooseFolders():
@@ -202,7 +206,6 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 	notExistInA = []
 	notExistInB = []
 	samePathAndName = []
-	sameNameAndTimeItems = []
 	equalFiles = []
 	toBeUpdatedFromBtoA = []
 	toBeUpdatedFromAtoB = []
@@ -234,7 +237,7 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 			#if item with same path exists in both folders to be synced
 			
 			if snapA[key][0] == 'file': #if item is file - compare them
-				samePathAndName.append([key, snapA[key][1][0]])
+				samePathAndName.append(snapA[key])
 				correspondingFileInB = os.path.join(rootSecondFolder, snapA[key][1][3])
 				# logConsole.debug('CORRESPONDING FILE IN B IS: ' + correspondingFileInB)
 				#put back root folder to path of file/folder in B
@@ -242,17 +245,17 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 				with open(snapA[key][1][0], 'rb') as f1:
 					with open(snapB[correspondingFileInB][1][0], 'rb') as f2:
 						if f1.read() == f2.read():
-							equalFiles.append([key, snapA[key][1][0]])
+							equalFiles.append(snapA[key])
 						else:
 							if snapA[key][3] < snapB[correspondingFileInB][3]:
 								#file in A newer than file in B -> add it to list to be copied from A to B
-								toBeUpdatedFromAtoB.append([key, snapA[key][1][0], snapA[key][0], ])
+								toBeUpdatedFromAtoB.append(snapA[key])
 							elif snapA[key][3] > snapB[correspondingFileInB][3]:
 								#file in A older than file in B -> add it to list to be copied from B to A
-								toBeUpdatedFromBtoA.append([key, snapA[key][1][0]])
+								toBeUpdatedFromBtoA.append(snapA[key])
 		else:
             # if file doesn't exist in B -> add it in list to be copied from A
-			notExistInB.append([key, snapA[key][1][0]])
+			notExistInB.append(snapA[key])
 
 	for path in pathsOfSnapB:
 		if not path in pathsOfSnapA:
@@ -318,11 +321,23 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 	logConsole.info('Start syncing files...')
 
 	for file in notExistInA:
-		pathWithRoot = file[0] # path of file in b from and with root folder
-		fullPathFileInB = file[1] # full path of file in b
-		# pathBeforeRoot = fullPath.split('\\' + pathWithRoot)[0]
-		fullPathFileInA = os.path.join(firstFolder, ) #add here path without root
-		if 
+		pathWithoutRoot = file[1][3] # path of file in b from without root folder and all the other previous folders
+		fullPathItemInB = file[1][0] # full path of file in b
+		fullPathItemInA = os.path.join(firstFolder, pathWithoutRoot) #path where copy item to
+		if file[0] == 'folder':
+			os.mkdir(fullPathItemInA)
+			logConsole.info(fullPathItemInA + ' is created.')
+			logFile.info(fullPathItemInA + ' is created.')
+		elif file[0] == 'file':
+			if os.path.exists(fullPathItemInA):
+				#it shouldn't happened, but just in case
+				logConsole.warning('WARNING: ' + fullPathItemInA + ' already exists!')
+				logFile.warning('WARNING: ' + fullPathItemInA + ' already exists!')
+				continue
+			else:
+				shutil.copy2(fullPathItemInB, fullPathItemInA)
+				logConsole.info(os.path.basename(fullPathItemInA + ' were copied.'))
+
 
 	# for file in notExistInA:
 	# 	pathToCopy = (rootFirstFolder + re.search(r'^([^\\]*)(\\.*)', file).group(2))
@@ -391,7 +406,11 @@ while True:
 	startSyncing = input('Do you want to sync these files? y/n: ').lower()
 	logFile.info('Do you want to sync these files? y/n: ')
 	if startSyncing == 'y':
-		syncFiles(compareResult, firstFolder, secondFolder)
+		if firstFolderSynced and secondFolderSynced:
+			logConsole.debug('Call function that syncing folders that have already been synced')
+		else:
+			#if one or neither of two folders have been synced already	
+			syncFiles(compareResult, firstFolder, secondFolder)
 		break
 	elif startSyncing == 'n':
 		#continue without copy/remove files
