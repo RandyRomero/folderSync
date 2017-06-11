@@ -345,7 +345,11 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 					logFile.info(os.path.basename(fullPathItemThatNotExitsYet + ' were copied.'))
 
 	copyNotExistBothWays(notExistInA, firstFolder)			
-	copyNotExistBothWays(notExistInB, secondFolder)			
+	copyNotExistBothWays(notExistInB, secondFolder)
+
+	# TODO make function that updates items
+
+	# TODO make printing and logging how many files were copied and what is their total size 			
 
 def devLap():
 
