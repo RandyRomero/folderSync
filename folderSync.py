@@ -321,25 +321,31 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 	logFile.info('Start syncing files...')
 	print('Start syncing files...')
 
-	for file in notExistInA:
-		pathWithoutRoot = file[1][3] # path of file in b from without root folder and all the other previous folders
-		fullPathItemInB = file[1][0] # full path of file in b
-		fullPathItemInA = os.path.join(firstFolder, pathWithoutRoot) #path where copy item to
-		if file[0] == 'folder':
-			os.mkdir(fullPathItemInA)
-			print(fullPathItemInA + ' is created.')
-			logFile.info(fullPathItemInA + ' is created.')
-		elif file[0] == 'file':
-			if os.path.exists(fullPathItemInA):
-				#it shouldn't happened, but just in case
-				logConsole.warning('WARNING: ' + fullPathItemInA + ' already exists!')
-				logFile.warning('WARNING: ' + fullPathItemInA + ' already exists!')
-				continue
-			else:
-				shutil.copy2(fullPathItemInB, fullPathItemInA)
-				print(os.path.basename(fullPathItemInA + ' were copied.'))
-				logFile.info(os.path.basename(fullPathItemInA + ' were copied.'))
 
+	def copyNotExistBothWays(notExistItems, pathToRoot):
+		for file in notExistItems:
+			pathWithoutRoot = file[1][3] # path of file in b from without root folder and all the other previous folders
+			fullPathItemInThisFolder = file[1][0] # full path of file in b
+			fullPathItemThatNotExitsYet = os.path.join(pathToRoot, pathWithoutRoot) #path where copy item to
+			if file[0] == 'folder':
+				os.mkdir(fullPathItemThatNotExitsYet)
+				#create folder instead of copying 
+				print(fullPathItemThatNotExitsYet + ' is created.')
+				logFile.info(fullPathItemThatNotExitsYet + ' is created.')
+			elif file[0] == 'file':
+				if os.path.exists(fullPathItemThatNotExitsYet):
+					#it shouldn't happened, but just in case
+					logConsole.warning('WARNING: ' + fullPathItemThatNotExitsYet + ' already exists!')
+					logFile.warning('WARNING: ' + fullPathItemThatNotExitsYet + ' already exists!')
+					continue
+				else:
+					shutil.copy2(fullPathItemInThisFolder, fullPathItemThatNotExitsYet)
+					#copy file
+					print(os.path.basename(fullPathItemThatNotExitsYet + ' were copied.'))
+					logFile.info(os.path.basename(fullPathItemThatNotExitsYet + ' were copied.'))
+
+	copyNotExistBothWays(notExistInA, firstFolder)			
+	copyNotExistBothWays(notExistInB, secondFolder)			
 
 def devLap():
 
@@ -440,8 +446,9 @@ def storeSnapshotBerofeExit(folderToTakeSnapshot, rootFolder, folderSynced):
 	shelFile.close()
 
 
-storeSnapshotBerofeExit(firstFolder, rootFirstFolder, firstFolderSynced)
-storeSnapshotBerofeExit(secondFolder, rootSecondFolder, secondFolderSynced)
+# storeSnapshotBerofeExit(firstFolder, rootFirstFolder, firstFolderSynced)
+# storeSnapshotBerofeExit(secondFolder, rootSecondFolder, secondFolderSynced)
+# uncomment two lines above for testing without it / don't delete it 
 
 print('Goodbye.')
 logFile.info('Goodbye.')
