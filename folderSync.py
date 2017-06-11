@@ -118,6 +118,7 @@ def getSnapshot(pathToRootFolder, rootFolder):
 			pathWOutRoot = fullPath.split(pathToRootFolder + '\\')[1]
 			#subtract path to root folder from full path whereby get path to folder/file without root folder 
 			pathWithRoot = os.path.join(rootFolder, pathWOutRoot)
+			
 			allPaths = [fullPath, rootFolder, pathWithRoot, pathWOutRoot]
  
 			currentSnapshot[pathWithRoot] = ['folder', allPaths]
@@ -218,12 +219,13 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 	snapA = getSnapshot(firstFolder, rootFirstFolder)
 	snapB = getSnapshot(secondFolder, rootSecondFolder)
 
-	#check A against B
+	
 	for key in snapB.keys():
 		pathsOfSnapB.append(snapB[key][1][3])
 		#create list of paths from second folder's snapshot
 		#get rid of name of root folder in the path to compare only what is inside folders: get '\somefolder\somefile.ext' instead of 'rootfolder\somefolder\somefile.ext' 	
 
+	#check A against B	
 	for key in snapA.keys():
 		pathsOfSnapA.append(snapA[key][1][3])
 		# --//-- 	
@@ -244,7 +246,7 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 						else:
 							if snapA[key][3] < snapB[correspondingFileInB][3]:
 								#file in A newer than file in B -> add it to list to be copied from A to B
-								toBeUpdatedFromAtoB.append([key, snapA[key][1][0]])
+								toBeUpdatedFromAtoB.append([key, snapA[key][1][0], snapA[key][0], ])
 							elif snapA[key][3] > snapB[correspondingFileInB][3]:
 								#file in A older than file in B -> add it to list to be copied from B to A
 								toBeUpdatedFromBtoA.append([key, snapA[key][1][0]])
@@ -254,7 +256,7 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 
 	for path in pathsOfSnapB:
 		if not path in pathsOfSnapA:
-			notExistInA.append([os.path.join(rootSecondFolder, path), os.path.join(rootSecondFolder, path)])
+			notExistInA.append([os.path.join(rootSecondFolder, path), os.path.join(rootSecondFolder, path)]) #FIX!
 	#check which files from B exist in A		
 
 
@@ -308,12 +310,19 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 
 	return notExistInA, notExistInB, toBeUpdatedFromBtoA, toBeUpdatedFromAtoB
 
-def syncFiles(compareResult, rootFirstFolder, rootSecondFolder):
+def syncFiles(compareResult, firstFolder, secondFolder):
 	#take lists with files to copy and copy them
 	notExistInA, notExistInB, toBeUpdatedFromBtoA, toBeUpdatedFromAtoB = compareResult
 
 	logFile.info('Start syncing files...')
 	logConsole.info('Start syncing files...')
+
+	for file in notExistInA:
+		pathWithRoot = file[0] # path of file in b from and with root folder
+		fullPathFileInB = file[1] # full path of file in b
+		# pathBeforeRoot = fullPath.split('\\' + pathWithRoot)[0]
+		fullPathFileInA = os.path.join(firstFolder, ) #add here path without root
+		if 
 
 	# for file in notExistInA:
 	# 	pathToCopy = (rootFirstFolder + re.search(r'^([^\\]*)(\\.*)', file).group(2))
@@ -382,7 +391,7 @@ while True:
 	startSyncing = input('Do you want to sync these files? y/n: ').lower()
 	logFile.info('Do you want to sync these files? y/n: ')
 	if startSyncing == 'y':
-		syncFiles()
+		syncFiles(compareResult, firstFolder, secondFolder)
 		break
 	elif startSyncing == 'n':
 		#continue without copy/remove files
