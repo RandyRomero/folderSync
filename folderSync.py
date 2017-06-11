@@ -257,10 +257,11 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
             # if file doesn't exist in B -> add it in list to be copied from A
 			notExistInB.append(snapA[key])
 
-	for path in pathsOfSnapB:
-		if not path in pathsOfSnapA:
-			notExistInA.append([os.path.join(rootSecondFolder, path), os.path.join(rootSecondFolder, path)]) #FIX!
-	#check which files from B exist in A		
+	for key in snapB.keys():
+		#check which files from B exist in A	
+		if not snapB[key][1][3] in pathsOfSnapA:
+			notExistInA.append(snapB[key])
+		
 
 
 	######### result messages to console and log file########## 		
@@ -318,7 +319,7 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 	notExistInA, notExistInB, toBeUpdatedFromBtoA, toBeUpdatedFromAtoB = compareResult
 
 	logFile.info('Start syncing files...')
-	logConsole.info('Start syncing files...')
+	print('Start syncing files...')
 
 	for file in notExistInA:
 		pathWithoutRoot = file[1][3] # path of file in b from without root folder and all the other previous folders
@@ -326,7 +327,7 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 		fullPathItemInA = os.path.join(firstFolder, pathWithoutRoot) #path where copy item to
 		if file[0] == 'folder':
 			os.mkdir(fullPathItemInA)
-			logConsole.info(fullPathItemInA + ' is created.')
+			print(fullPathItemInA + ' is created.')
 			logFile.info(fullPathItemInA + ' is created.')
 		elif file[0] == 'file':
 			if os.path.exists(fullPathItemInA):
@@ -336,12 +337,9 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 				continue
 			else:
 				shutil.copy2(fullPathItemInB, fullPathItemInA)
-				logConsole.info(os.path.basename(fullPathItemInA + ' were copied.'))
+				print(os.path.basename(fullPathItemInA + ' were copied.'))
+				logFile.info(os.path.basename(fullPathItemInA + ' were copied.'))
 
-
-	# for file in notExistInA:
-	# 	pathToCopy = (rootFirstFolder + re.search(r'^([^\\]*)(\\.*)', file).group(2))
-	# 	shutil.copy(file, pathToCopy)
 
 def devLap():
 
