@@ -227,6 +227,9 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 		#create list of paths from second folder's snapshot
 		#get rid of name of root folder in the path to compare only what is inside folders: get '\somefolder\somefile.ext' instead of 'rootfolder\somefolder\somefile.ext' 	
 
+	
+	print() # this print() is needed to make offset
+
 	#check A against B	
 	for key in snapA.keys():
 		pathsOfSnapA.append(snapA[key][1][3])
@@ -270,14 +273,14 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 	logFile.info(firstFolder)
 	print('###########################')
 	
-	print(str(len(samePathAndName)) + ' item(s) that exist in both folders.')
-	logFile.info(str(len(samePathAndName)) +  ' files that exist in both folders.')
+	print(str(len(samePathAndName)) + ' file(s) that exist in both folders.')
+	logFile.info(str(len(samePathAndName)) +  ' file(s) that exist in both folders.')
 	for path in samePathAndName:
 		logFile.info(path[0])
 	logFile.info('\n')	
 
-	print(str(len(equalFiles)) + ' item(s) don\'t need update.')
-	logFile.info(str(len(equalFiles)) + ' files don\'t need update.')
+	print(str(len(equalFiles)) + ' file(s) don\'t need update.')
+	logFile.info(str(len(equalFiles)) + ' file(s) don\'t need update.')
 	for path in equalFiles:
 		logFile.info(path[0])
 	logFile.info('\n')	
