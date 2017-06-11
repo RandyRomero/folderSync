@@ -6,9 +6,8 @@
 	And keep track of changes in both folders.'''
 
 from __future__ import with_statement
-import logging, math, os, re, shutil, shelve, sys, time 
+import logging, math, os, re, shutil, send2trash, shelve, sys, time 
 #import platform
-#import send2trash
 
 ############################ Set loggers ####################################
 
@@ -247,12 +246,14 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 						if f1.read() == f2.read():
 							equalFiles.append(snapA[key])
 						else:
-							if snapA[key][3] < snapB[correspondingFileInB][3]:
+							if snapA[key][3] > snapB[correspondingFileInB][3]:
 								#file in A newer than file in B -> add it to list to be copied from A to B
-								toBeUpdatedFromAtoB.append(snapA[key])
-							elif snapA[key][3] > snapB[correspondingFileInB][3]:
+								toBeUpdatedFromAtoB.append([snapA[key][1][0], snapB[correspondingFileInB][1][0]])
+								# add to list another list with full paths of both files
+							elif snapA[key][3] < snapB[correspondingFileInB][3]:
 								#file in A older than file in B -> add it to list to be copied from B to A
-								toBeUpdatedFromBtoA.append(snapA[key])
+								toBeUpdatedFromBtoA.append([snapB[correspondingFileInB][1][0], snapA[key][1][0]])
+								# add to list another list with full paths of both files
 		else:
             # if file doesn't exist in B -> add it in list to be copied from A
 			notExistInB.append(snapA[key])
@@ -261,8 +262,6 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 		#check which files from B exist in A	
 		if not snapB[key][1][3] in pathsOfSnapA:
 			notExistInA.append(snapB[key])
-		
-
 
 	######### result messages to console and log file########## 		
 	print('')
@@ -322,7 +321,9 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 	print('Start syncing files...')
 
 
-	def copyNotExistBothWays(notExistItems, pathToRoot):
+	def copyNotExistItems(notExistItems, pathToRoot):
+		'''Copy files that don't exist in one of folders'''
+
 		for file in notExistItems:
 			pathWithoutRoot = file[1][3] # path of file in b from without root folder and all the other previous folders
 			fullPathItemInThisFolder = file[1][0] # full path of file in b
@@ -330,8 +331,8 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 			if file[0] == 'folder':
 				os.mkdir(fullPathItemThatNotExitsYet)
 				#create folder instead of copying 
-				print(fullPathItemThatNotExitsYet + ' is created.')
-				logFile.info(fullPathItemThatNotExitsYet + ' is created.')
+				print(fullPathItemThatNotExitsYet + ' was created.')
+				logFile.info(fullPathItemThatNotExitsYet + ' was created.')
 			elif file[0] == 'file':
 				if os.path.exists(fullPathItemThatNotExitsYet):
 					#it shouldn't happened, but just in case
@@ -344,11 +345,35 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 					print(os.path.basename(fullPathItemThatNotExitsYet + ' were copied.'))
 					logFile.info(os.path.basename(fullPathItemThatNotExitsYet + ' were copied.'))
 
-	copyNotExistBothWays(notExistInA, firstFolder)			
-	copyNotExistBothWays(notExistInB, secondFolder)
+	def updateFiles(toBeUpdated):
+		'''Update file by deleting old one and copying new one instead of it'''
+		for array in toBeUpdated:
+			if os.path.exists(array[0]) and os.path.exists(array[1]):
+				send2trash.send2trash(array[1])
+				shutil.copy2(array[0], array[1])
+				print(array[1] + ' was updated.')
+				logFile.info(array[1] + ' was updated.')
+			elif not os.path.exists(array[0]):
+				print(array[0] + ' hasn\'t been found! Can\'t handle it.')
+				logFile.warning(array[0] + ' hasn\'t been found! Can\'t handle it.')
+			elif not os.path.exists(array[1]):
+				print(array[1] + ' hasn\'t been found! Can\'t handle it.')
+				logFile.warning(array[1] + ' hasn\'t been found! Can\'t handle it.')
 
-	# TODO make function that updates items
 
+	if len(notExistInA) > 0:
+		copyNotExistItems(notExistInA, firstFolder)			
+	
+	if len(notExistInB) > 0:
+		copyNotExistItems(notExistInB, secondFolder)
+
+	if len(toBeUpdatedFromAtoB) > 0:
+		updateFiles(toBeUpdatedFromAtoB)	
+
+	if len(toBeUpdatedFromBtoA) > 0:
+		updateFiles(toBeUpdatedFromBtoA)
+
+	
 	# TODO make printing and logging how many files were copied and what is their total size 			
 
 def devLap():
