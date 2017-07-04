@@ -136,7 +136,7 @@ def getSnapshot(pathToRootFolder, rootFolder):
 			sizeOfCurrentFile = os.path.getsize(allPaths[0])
 			totalSize += sizeOfCurrentFile
 			currentSnapshot[pathWithRoot] = ['file', allPaths, sizeOfCurrentFile, math.ceil(os.path.getmtime(allPaths[0]))]
-			#math.ceil for rounding float
+			#math.ceil for rounding float because otherwise it is to precise for our purpose 
 			filesNumber += 1
 
 	print('There are ' + str(foldersNumber) + ' folders and ' + 
@@ -208,6 +208,7 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 	equalFiles = []
 	toBeUpdatedFromBtoA = []
 	toBeUpdatedFromAtoB = []
+	totalSizeToTransfer = 0
 	''' in each list script adds two version of path to file: 
 	first (key) with root folder, second (snapA[key][1][0]]) with full path.
 	First is shorter and for logs, 
@@ -253,18 +254,24 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 								#file in A newer than file in B -> add it to list to be copied from A to B
 								toBeUpdatedFromAtoB.append([snapA[key][1][0], snapB[correspondingFileInB][1][0]])
 								# add to list another list with full paths of both files
+								totalSizeToTransfer += snapA[key][2]
 							elif snapA[key][3] < snapB[correspondingFileInB][3]:
 								#file in A older than file in B -> add it to list to be copied from B to A
 								toBeUpdatedFromBtoA.append([snapB[correspondingFileInB][1][0], snapA[key][1][0]])
 								# add to list another list with full paths of both files
+								totalSizeToTransfer += snapA[key][2]
 		else:
             # if file doesn't exist in B -> add it in list to be copied from A
 			notExistInB.append(snapA[key])
+			if [snapA[key][1]] == 'file':
+				totalSizeToTransfer += snapA[key][2]
 
 	for key in snapB.keys():
 		#check which files from B exist in A	
 		if not snapB[key][1][3] in pathsOfSnapA:
 			notExistInA.append(snapB[key])
+			if snapB[key][0] == 'file':
+				totalSizeToTransfer += snapB[key][2]
 
 	######### result messages to console and log file########## 		
 	print('')
@@ -308,6 +315,14 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 	for path in toBeUpdatedFromBtoA:
 		logFile.info(path[0])
 	logFile.info('\n')
+
+	totalNumberToTransfer = len(notExistInA) + len(notExistInB) + len(toBeUpdatedFromAtoB) + len(toBeUpdatedFromBtoA)
+	print('Total number items to transfer: ' + str(totalNumberToTransfer))
+	logFile.info('Total number items to transfer: ' + str(totalNumberToTransfer))
+	print()
+	logFile.info('\n')
+
+	print('Total size of files to transfer is ' + str("{0:.0f}".format(totalSizeToTransfer / 1024 / 1024)) + ' MB.')
 
 	# for path in pathsOfSnapB:
 	# 	logFile.debug('ITEM IN B: ' + path)
@@ -468,12 +483,13 @@ def storeSnapshotBerofeExit(folderToTakeSnapshot, rootFolder, folderSynced):
 
 	snapshot = getSnapshot(folderToTakeSnapshot, rootFolder)
 	
+	storeTime = time.strftime('%Y-%m-%d %Hh-%Mm')
 	shelFile['path'] = folderToTakeSnapshot
 	shelFile['snapshot'] = snapshot
-	shelFile['date'] = timestr
+	shelFile['date'] = storeTime
 
-	print('Snapshot of ' + rootFolder + ' was stored in ' + folderToTakeSnapshot + ' at ' + timestr)
-	logFile.info('Snapshot of ' + rootFolder + ' was stored in ' + folderToTakeSnapshot + ' at ' + timestr)
+	print('Snapshot of ' + rootFolder + ' was stored in ' + folderToTakeSnapshot + ' at ' + storeTime)
+	logFile.info('Snapshot of ' + rootFolder + ' was stored in ' + folderToTakeSnapshot + ' at ' + storeTime)
 
 	shelFile.close()
 
