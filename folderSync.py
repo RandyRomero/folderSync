@@ -101,6 +101,8 @@ def hasItEverBeenSynced(pathToRootFolder):
 def getSnapshot(pathToRootFolder, rootFolder):
 	# get all file and folder paths, 
 	# and collect file size and file time of modification
+	
+	startTime = time.time()
 	print('\nGetting snapshot of ' + pathToRootFolder + '...')
 	logFile.info('\nGetting snapshot of ' + pathToRootFolder + '...')
 
@@ -148,6 +150,8 @@ def getSnapshot(pathToRootFolder, rootFolder):
 	logFile.info('Total size of ' + pathToRootFolder + ' is ' + 
 		str("{0:.0f}".format(totalSize / 1024 /1024)) + ' MB.\n')
 
+	print('--- {0:.3f} seconds ---\n'.format(time.time() - startTime))
+	logFile.info('--- {0:.3f} seconds ---\n'.format(time.time() - startTime))
 	return currentSnapshot
 
 def getChangesBetweenStatesOFFolders(pathToFolder, rootOfPath):
@@ -202,6 +206,7 @@ def getChangesBetweenStatesOFFolders(pathToFolder, rootOfPath):
 def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder):
 	'''compare files in binary mode if folders haven't been synced before'''
 
+	startTime = time.time()
 	notExistInA = []
 	notExistInB = []
 	samePathAndName = []
@@ -324,6 +329,8 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 
 	print('Total size of files to transfer is ' + str("{0:.0f}".format(totalSizeToTransfer / 1024 / 1024)) + ' MB.')
 
+	print('--- {0:.3f} --- seconds\n'.format(time.time() - startTime))
+	logFile.info('--- {0:.3f} --- seconds'.format(time.time() - startTime))
 	# for path in pathsOfSnapB:
 	# 	logFile.debug('ITEM IN B: ' + path)
 	# for path in pathsOfSnapA:
@@ -333,6 +340,8 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 
 def syncFiles(compareResult, firstFolder, secondFolder):
 	#take lists with files to copy and copy them
+	
+	startTime = time.time()
 	notExistInA, notExistInB, toBeUpdatedFromBtoA, toBeUpdatedFromAtoB = compareResult
 
 	logFile.info('Start syncing files...')
@@ -391,7 +400,8 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 	if len(toBeUpdatedFromBtoA) > 0:
 		updateFiles(toBeUpdatedFromBtoA)
 
-	
+	print('--- {0:.3f} seconds ---\n'.format(time.time - startTime))
+	logFile.info('--- {0:.3f} seconds ---\n'.format(time.time - startTime))
 	# TODO make printing and logging how many files were copied and what is their total size 			
 
 def devLap():
@@ -447,9 +457,6 @@ if firstFolderSynced and secondFolderSynced:
 	print('There should be function that compare folders if they have already been compared')
 else:
 	compareResult = lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder)			
-
-
-
 
 ################### Syncing section: copy and delete items ###################
 
