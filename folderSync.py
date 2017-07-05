@@ -235,6 +235,20 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 	
 	print() # this print() is needed to make offset
 
+	def checkAgeFiles():
+		nonlocal totalSizeToTransfer
+
+		if snapA[key][3] > snapB[correspondingFileInB][3]:
+			#file in A newer than file in B -> add it to list to be copied from A to B
+			toBeUpdatedFromAtoB.append([snapA[key][1][0], snapB[correspondingFileInB][1][0], snapA[key][2]])
+			# add to list another list with full paths of both files
+			totalSizeToTransfer += snapA[key][2]
+		elif snapA[key][3] < snapB[correspondingFileInB][3]:
+			#file in A older than file in B -> add it to list to be copied from B to A
+			toBeUpdatedFromBtoA.append([snapB[correspondingFileInB][1][0], snapA[key][1][0], snapB[correspondingFileInB][2]])
+			# add to list another list with full paths of both files
+			totalSizeToTransfer += snapB[correspondingFileInB][2]
+
 	#check A against B	
 	for key in snapA.keys():
 		pathsOfSnapA.append(snapA[key][1][3])
@@ -248,22 +262,19 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 				correspondingFileInB = os.path.join(rootSecondFolder, snapA[key][1][3])
 				# logConsole.debug('CORRESPONDING FILE IN B IS: ' + correspondingFileInB)
 				#put back root folder to path of file/folder in B
+				
 				print('Comparing files... ' + snapA[key][1][3])
-				with open(snapA[key][1][0], 'rb') as f1:
-					with open(snapB[correspondingFileInB][1][0], 'rb') as f2:
-						if f1.read() == f2.read():
-							equalFiles.append(snapA[key])
-						else:
-							if snapA[key][3] > snapB[correspondingFileInB][3]:
-								#file in A newer than file in B -> add it to list to be copied from A to B
-								toBeUpdatedFromAtoB.append([snapA[key][1][0], snapB[correspondingFileInB][1][0]], snapA[key][2])
-								# add to list another list with full paths of both files
-								totalSizeToTransfer += snapA[key][2]
-							elif snapA[key][3] < snapB[correspondingFileInB][3]:
-								#file in A older than file in B -> add it to list to be copied from B to A
-								toBeUpdatedFromBtoA.append([snapB[correspondingFileInB][1][0], snapA[key][1][0]], snapB[correspondingFileInB][2])
-								# add to list another list with full paths of both files
-								totalSizeToTransfer += snapB[correspondingFileInB][2]
+				if snapA[key][2] != snapB[correspondingFileInB][2]:
+					# if sizes of files are not equal, skip binary comparison
+					checkAgeFiles()
+				else:		
+					with open(snapA[key][1][0], 'rb') as f1:
+						with open(snapB[correspondingFileInB][1][0], 'rb') as f2:
+							if f1.read() == f2.read():
+								# byte-to-byte comparison
+								equalFiles.append(snapA[key])
+							else:
+								checkAgeFiles()
 		else:
             # if file doesn't exist in B -> add it in list to be copied from A
 			notExistInB.append(snapA[key])
@@ -367,8 +378,8 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 				os.mkdir(fullPathItemThatNotExitsYet)
 				#create empty folder instead of copying full directory 
 				wereCreated += 1
-				print(fullPathItemThatNotExitsYet + ' was created.')
-				logFile.info(fullPathItemThatNotExitsYet + ' was created.')
+				print('- ' + fullPathItemThatNotExitsYet + ' was created.')
+				logFile.info('- ' + fullPathItemThatNotExitsYet + ' was created.')
 
 
 			elif file[0] == 'file':
@@ -382,8 +393,8 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 					#copy file
 					wereCopied += 1
 					totalSize += file[2]
-					print(os.path.basename(fullPathItemThatNotExitsYet + ' were copied.'))
-					logFile.info(os.path.basename(fullPathItemThatNotExitsYet + ' were copied.'))
+					print('- ' + os.path.basename(fullPathItemThatNotExitsYet + ' was copied.'))
+					logFile.info('- ' + os.path.basename(fullPathItemThatNotExitsYet + ' was copied.'))
 
 	def updateFiles(toBeUpdated):
 		'''Update file by deleting old one and copying new one instead of it'''
@@ -394,8 +405,8 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 			if os.path.exists(array[0]) and os.path.exists(array[1]):
 				send2trash.send2trash(array[1])
 				shutil.copy2(array[0], array[1])
-				print(array[1] + ' was updated.')
-				logFile.info(array[1] + ' was updated.')
+				print('- ' + array[1] + ' was updated.')
+				logFile.info('- ' + array[1] + ' was updated.')
 				totalSize += array[2]
 			elif not os.path.exists(array[0]):
 				print(array[0] + ' hasn\'t been found! Can\'t handle it.')
@@ -417,17 +428,17 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 	if len(toBeUpdatedFromBtoA) > 0:
 		updateFiles(toBeUpdatedFromBtoA)
 
-	print(str(wereCopied) + ' folders were copied.')
-	logFile.info(str(wereCopied) + ' folder were copied.')
+	print('\n' + str(wereCreated) + ' folders were created.')
+	logFile.info('\n' + str(wereCreated) + ' folder were created.')
 
-	print(str(wereCopied) + ' files were copied')
-	logFile.info(str(wereCopied) + ' files were copied')
+	print(str(wereCopied) + ' files were copied.')
+	logFile.info(str(wereCopied) + ' files were copied.')
 
-	print('Total size of files were copied or updated is ' + str(totalSize))
-	logFile.info('Total size of files were copied or updated is ' + str(totalSize))
+	print('Total size of files were copied or updated is {0:.2f} MB.'.format(totalSize / 1024 / 1024))
+	logFile.info('Total size of files were copied or updated is {0:.2f} MB.'.format(totalSize / 1024 / 1024))
 
-	print('--- {0:.3f} seconds ---\n'.format(time.time - startTime))
-	logFile.info('--- {0:.3f} seconds ---\n'.format(time.time - startTime))
+	print('--- {0:.3f} seconds ---\n'.format(time.time() - startTime))
+	logFile.info('--- {0:.3f} seconds ---\n'.format(time.time() - startTime))
 	# TODO make printing and logging how many files were copied and what is their total size 			
 
 def devLap():
