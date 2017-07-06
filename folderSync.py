@@ -5,7 +5,6 @@
 	But script should be able to sync in both ways. 
 	And keep track of changes in both folders.'''
 
-from __future__ import with_statement
 import logging, math, os, re, shutil, send2trash, shelve, sys, time 
 #import platform
 
@@ -158,7 +157,6 @@ def getChangesBetweenStatesOFFolders(pathToFolder, rootOfPath):
 	'''Compare folder's snapshot that was stored in .folderSyncSnapshot 
 	folder during last syncing with fresh snashot that is going to be taken within this function. It needs to figure out which files were removed in order not to acquire it from not yet updated folder again'''
 
-
 	try:
 		shelFile = shelve.open(os.path.join(pathToFolder, '.folderSyncSnapshot', 'snapshot'))
 	except:
@@ -166,14 +164,14 @@ def getChangesBetweenStatesOFFolders(pathToFolder, rootOfPath):
 		sys.exit()
 
 	folderSnapshot = getSnapshot(pathToFolder, rootOfPath)
+	# analyse current state of folder
 	previousSnapshot = shelFile['snapshot']
+	# load previous state of folder from shelve db
 
 	pathOfPrevSnapshot = []
 	pathOfCurrentSnapshot = []
 	itemWasRemoved = []
-	itemWasRemovedCount = 0
-	newItem = []
-	newItemCount = 0
+	newItems = []
 
 	for key in folderSnapshot.keys():
 		pathOfCurrentSnapshot.append(folderSnapshot[key][1][3])
@@ -184,24 +182,26 @@ def getChangesBetweenStatesOFFolders(pathToFolder, rootOfPath):
 		if previousSnapshot[key][1][3] not in pathOfCurrentSnapshot:
 			logFile.info(key + ' WAS REMOVED')
 			itemWasRemoved.append(key)
-			itemWasRemovedCount += 1
 
 	for path in pathOfCurrentSnapshot:
 		if path not in pathOfPrevSnapshot:
-			# print(path + ' IS NEW ITEM')
 			logFile.info(path + ' IS NEW ITEM')
-			newItem.append(path)
-			newItemCount += 1
+			newItems.append(path)
 
 	print('\n' + pathToFolder)
 	logFile.info('\n' + pathToFolder)
-	print(str(itemWasRemovedCount) + ' items were removed')
-	logFile.info(str(itemWasRemovedCount) + ' items were removed')
+	print(str(len(itemWasRemoved)) + ' items were removed')
+	logFile.info(str(len(itemWasRemoved)) + ' items were removed')
 	
-	print('There are ' + str(newItemCount) + ' new items')
-	logFile.info('There are ' + str(newItemCount) + ' new items')
+	print('There are ' + str(len(newItems)) + ' new items')
+	logFile.info('There are ' + str(len(newItems)) + ' new items')
 	print()
 	logFile.info('\n')
+
+# def highComparison():
+	''' 1. Comapre files that was not removed 
+		2. Compare by modfication time
+		3. If mtime not mismatch, compare byte-by-byte to be sure'''
 
 def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder):
 	'''compare files in binary mode if folders haven't been synced before'''
@@ -305,37 +305,37 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 	print(str(len(samePathAndName)) + ' file(s) that exist in both folders.')
 	logFile.info(str(len(samePathAndName)) +  ' file(s) that exist in both folders.')
 	for path in samePathAndName:
-		logFile.info(path[0])
+		logFile.info(path[1][0])
 	logFile.info('\n')	
 
 	print(str(len(equalFiles)) + ' file(s) don\'t need update.')
 	logFile.info(str(len(equalFiles)) + ' file(s) don\'t need update.')
 	for path in equalFiles:
-		logFile.info(path[0])
+		logFile.info(path[1][0])
 	logFile.info('\n')	
 
 	print(str(len(notExistInB)) + ' items from  ' + firstFolder + ' don\'t exist in \'' + secondFolder + '\'')
 	logFile.info(str(len(notExistInB)) + ' items from  ' + firstFolder + ' don\'t exist in \'' + secondFolder + '\'')
 	for path in notExistInB:
-		logFile.info(path[0])
+		logFile.info(path[1][0])
 	logFile.info('\n')
 
 	print(str(len(notExistInA)) + ' item(s) from  ' + secondFolder + ' don\'t exist in \'' + firstFolder + '\'')
 	logFile.info(str(len(notExistInA)) + ' item(s) from  ' + secondFolder + ' don\'t exist in \'' + firstFolder + '\'')
 	for path in notExistInA:
-		logFile.info(path[0])
+		logFile.info(path[1][0])
 	logFile.info('\n')	
 
 	print(str(len(toBeUpdatedFromAtoB)) + ' item(s) need to update in \'' + secondFolder + '\'')
 	logFile.info(str(len(toBeUpdatedFromAtoB)) + ' item(s) need to update in \'' + secondFolder + '\'')
 	for path in toBeUpdatedFromAtoB:
-		logFile.info(path[0])
+		logFile.info(path[1][0])
 	logFile.info('\n')	
 
 	print(str(len(toBeUpdatedFromBtoA)) + ' item(s) need to update in \'' + firstFolder + '\'')
 	logFile.info(str(len(toBeUpdatedFromBtoA)) + ' item(s) need to update in \'' + firstFolder + '\'')
 	for path in toBeUpdatedFromBtoA:
-		logFile.info(path[0])
+		logFile.info(path[1][0])
 	logFile.info('\n')
 	
 
@@ -480,8 +480,10 @@ else:
 ################### Syncing section: copy and delete items ###################
 
 numberFilesToTransfer = len(compareResult[0] + compareResult[1] + compareResult[2] + compareResult[3])
+	# check how many files script should transfer in total
 
 if numberFilesToTransfer > 0:
+	''' Menu to ask user if he wants to start transfering files '''
 	while True:
 		startSyncing = input('Do you want to sync these files? y/n: ').lower()
 		logFile.info('Do you want to sync these files? y/n: ')
