@@ -199,7 +199,7 @@ def getChangesBetweenStatesOFFolders(pathToFolder, rootOfPath):
 	logFile.info('\n')
 
 # def highComparison():
-	''' 1. Comapre files that was not removed 
+	''' 1. Comapre files that were not removed 
 		2. Compare by modfication time
 		3. If mtime not mismatch, compare byte-by-byte to be sure'''
 
@@ -466,34 +466,19 @@ rootSecondFolder = re.search(r'(\w+$)', secondFolder).group(0)
 # snapshotSecondFolder = getSnapshot(secondFolder, rootSecondFolder)
 #get all paths of all files and folders with properties from folders to be compared 
 
-if firstFolderSynced:
-	getChangesBetweenStatesOFFolders(firstFolder, rootFirstFolder)
-
-if secondFolderSynced:
-	getChangesBetweenStatesOFFolders(secondFolder, rootSecondFolder)
-
-if firstFolderSynced and secondFolderSynced:
-	print('There should be function that compare folders if they have already been compared')
-else:
-	compareResult = lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder)			
-
-################### Syncing section: copy and delete items ###################
-
-numberFilesToTransfer = len(compareResult[0] + compareResult[1] + compareResult[2] + compareResult[3])
-	# check how many files script should transfer in total
-
-if numberFilesToTransfer > 0:
-	''' Menu to ask user if he wants to start transfering files '''
+def menuBeforeSync():
+	''' Menu to ask user if he wants to start transfering files '''		
 	while True:
 		startSyncing = input('Do you want to sync these files? y/n: ').lower()
 		logFile.info('Do you want to sync these files? y/n: ')
 		if startSyncing == 'y':
 			if firstFolderSynced and secondFolderSynced:
 				logConsole.debug('Call function that syncing folders that have already been synced')
+				break
 			else:
 				#if one or neither of two folders have been synced already	
 				syncFiles(compareResult, firstFolder, secondFolder)
-			break
+				break
 		elif startSyncing == 'n':
 			#continue without copy/remove files
 			break
@@ -502,6 +487,22 @@ if numberFilesToTransfer > 0:
 			logFile.info('Error of input. Try again.')
 			continue	
 
+if firstFolderSynced:
+	getChangesBetweenStatesOFFolders(firstFolder, rootFirstFolder)
+
+if secondFolderSynced:
+	getChangesBetweenStatesOFFolders(secondFolder, rootSecondFolder)
+
+if firstFolderSynced and secondFolderSynced:
+	print('...')
+else:
+	compareResult = lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder)
+
+	numberFilesToTransfer = len(compareResult[0] + compareResult[1] + compareResult[2] + compareResult[3])
+	# check how many files script should transfer in total
+	if numberFilesToTransfer > 0:
+		# call sync function if there is something to sync
+		menuBeforeSync()
 
 def storeSnapshotBerofeExit(folderToTakeSnapshot, rootFolder, folderSynced):
 	'''Store state of folder to be synced after it was synced on storage'''
