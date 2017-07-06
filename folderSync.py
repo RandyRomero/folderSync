@@ -163,28 +163,30 @@ def getChangesBetweenStatesOFFolders(pathToFolder, rootOfPath):
 		print('Can\'t open stored snapshot. Exit.')
 		sys.exit()
 
-	folderSnapshot = getSnapshot(pathToFolder, rootOfPath)
+	currentFolderSnapshot = getSnapshot(pathToFolder, rootOfPath)
 	# analyse current state of folder
 	previousSnapshot = shelFile['snapshot']
 	# load previous state of folder from shelve db
 
-	pathOfPrevSnapshot = []
-	pathOfCurrentSnapshot = []
+	itemsFromPrevSnapshot = []
+	itemsOfCurrentSnapshot = []
 	itemWasRemoved = []
 	newItems = []
 
-	for key in folderSnapshot.keys():
-		pathOfCurrentSnapshot.append(folderSnapshot[key][1][3])
+	for key in currentFolderSnapshot.keys():
+		itemsOfCurrentSnapshot.append(currentFolderSnapshot[key][1][3])
+		# get current list of paths of files/folders 
+		# in order to check it against previous list 
 
 	for key in previousSnapshot.keys():
-		pathOfPrevSnapshot.append(previousSnapshot[key][1][3])
+		itemsFromPrevSnapshot.append(previousSnapshot[key][1][3])
 
-		if previousSnapshot[key][1][3] not in pathOfCurrentSnapshot:
+		if previousSnapshot[key][1][3] not in itemsOfCurrentSnapshot:
 			logFile.info(key + ' WAS REMOVED')
 			itemWasRemoved.append(key)
 
-	for path in pathOfCurrentSnapshot:
-		if path not in pathOfPrevSnapshot:
+	for path in itemsOfCurrentSnapshot:
+		if path not in itemsFromPrevSnapshot:
 			logFile.info(path + ' IS NEW ITEM')
 			newItems.append(path)
 
@@ -200,8 +202,9 @@ def getChangesBetweenStatesOFFolders(pathToFolder, rootOfPath):
 
 # def highComparison():
 	''' 1. Comapre files that were not removed 
-		2. Compare by modfication time
-		3. If mtime not mismatch, compare byte-by-byte to be sure'''
+		2. Compare by modfication time and size
+		3. If size is equal, but mtime is different, check byte-by-byte'''
+	
 
 def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder):
 	'''compare files in binary mode if folders haven't been synced before'''
