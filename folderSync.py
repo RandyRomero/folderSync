@@ -448,31 +448,6 @@ def syncFiles(compareResult, firstFolder, secondFolder):
 	logFile.info('--- {0:.3f} seconds ---\n'.format(time.time() - startTime))
 	# TODO make printing and logging how many files were copied and what is their total size 			
 
-def devLap():
-
-	logConsole.debug('You are on dev laptop. Using default adressess for test.')
-	logFile.debug('You are on dev laptop. Using default adressess for test.')
-
-# #paths hardcoded for the sake of speed of testing
-# # Scrip gets the name of PC in order to work on my several laptops without
-# # typing paths for folders to sync
-
-# if platform.node() == 'ZenBook3':
-# 	devLap()
-# 	firstFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\A'
-# 	secondFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\B'
-# elif platform.node() == 'AcerVNitro':
-# 	devLap()
-# 	firstFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\A'
-# 	secondFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\B'
-# elif platform.node() == 'ASUSG751':
-# 	devLap()
-# 	firstFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\A'
-# 	secondFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\B'
-# else:
-# 	logConsole.debug('Unknown computer.')
-# 	logFile.debug('Unknown computer.')
-# 	firstFolder, secondFolder = menuChooseFolders()
 
 firstFolder, secondFolder = menuChooseFolders()
 
@@ -504,23 +479,26 @@ else:
 
 ################### Syncing section: copy and delete items ###################
 
-while True:
-	startSyncing = input('Do you want to sync these files? y/n: ').lower()
-	logFile.info('Do you want to sync these files? y/n: ')
-	if startSyncing == 'y':
-		if firstFolderSynced and secondFolderSynced:
-			logConsole.debug('Call function that syncing folders that have already been synced')
+numberFilesToTransfer = len(compareResult[0] + compareResult[1] + compareResult[2] + compareResult[3])
+
+if numberFilesToTransfer > 0:
+	while True:
+		startSyncing = input('Do you want to sync these files? y/n: ').lower()
+		logFile.info('Do you want to sync these files? y/n: ')
+		if startSyncing == 'y':
+			if firstFolderSynced and secondFolderSynced:
+				logConsole.debug('Call function that syncing folders that have already been synced')
+			else:
+				#if one or neither of two folders have been synced already	
+				syncFiles(compareResult, firstFolder, secondFolder)
+			break
+		elif startSyncing == 'n':
+			#continue without copy/remove files
+			break
 		else:
-			#if one or neither of two folders have been synced already	
-			syncFiles(compareResult, firstFolder, secondFolder)
-		break
-	elif startSyncing == 'n':
-		#continue without copy/remove files
-		break
-	else:
-		print('Error of input. Try again.')
-		logFile.info('Error of input. Try again.')
-		continue	
+			print('Error of input. Try again.')
+			logFile.info('Error of input. Try again.')
+			continue	
 
 
 def storeSnapshotBerofeExit(folderToTakeSnapshot, rootFolder, folderSynced):
@@ -553,8 +531,34 @@ print('Goodbye.')
 logFile.info('Goodbye.')
 
 
-
 ########## crap ##############
 
 # 	getattr(logFile, level)(message)
 # 	#what is above means "logFile.level(message)" where level is method's name which is known only by runtime. For example "logFile.info(message)" where 'info' is coming from variable 
+
+
+# def devLap():
+
+# 	logConsole.debug('You are on dev laptop. Using default adressess for test.')
+# 	logFile.debug('You are on dev laptop. Using default adressess for test.')
+
+# #paths hardcoded for the sake of speed of testing
+# # Scrip gets the name of PC in order to work on my several laptops without
+# # typing paths for folders to sync
+
+# if platform.node() == 'ZenBook3':
+# 	devLap()
+# 	firstFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\A'
+# 	secondFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\B'
+# elif platform.node() == 'AcerVNitro':
+# 	devLap()
+# 	firstFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\A'
+# 	secondFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\B'
+# elif platform.node() == 'ASUSG751':
+# 	devLap()
+# 	firstFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\A'
+# 	secondFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\B'
+# else:
+# 	logConsole.debug('Unknown computer.')
+# 	logFile.debug('Unknown computer.')
+# 	firstFolder, secondFolder = menuChooseFolders()
