@@ -169,31 +169,34 @@ def getChangesBetweenStatesOFFolders(pathToFolder, rootOfPath):
 	# load previous state of folder from shelve db
 
 	itemsFromPrevSnapshot = []
-	itemsOfCurrentSnapshot = []
-	itemWasRemoved = []
+	itemsFromCurrentSnapshot = []
+	itemsWereRemoved = []
 	newItems = []
 
 	for key in currentFolderSnapshot.keys():
-		itemsOfCurrentSnapshot.append(currentFolderSnapshot[key][1][3])
+		itemFromCurrentSnapshot = currentFolderSnapshot[key]
+		itemsFromCurrentSnapshot.append(itemFromCurrentSnapshot)
 		# get current list of paths of files/folders 
 		# in order to check it against previous list 
 
 	for key in previousSnapshot.keys():
-		itemsFromPrevSnapshot.append(previousSnapshot[key][1][3])
+		itemFromPrevSnapshot = previousSnapshot[key]
+		itemsFromPrevSnapshot.append(itemFromPrevSnapshot)
+		# get list of paths of files from previous folder snapshot
 
-		if previousSnapshot[key][1][3] not in itemsOfCurrentSnapshot:
+		if itemFromPrevSnapshot not in itemsFromCurrentSnapshot:
 			logFile.info(key + ' WAS REMOVED')
-			itemWasRemoved.append(key)
+			itemsWereRemoved.append(key)
 
-	for path in itemsOfCurrentSnapshot:
+	for path in itemsFromCurrentSnapshot:
 		if path not in itemsFromPrevSnapshot:
 			logFile.info(path + ' IS NEW ITEM')
 			newItems.append(path)
 
 	print('\n' + pathToFolder)
 	logFile.info('\n' + pathToFolder)
-	print(str(len(itemWasRemoved)) + ' items were removed')
-	logFile.info(str(len(itemWasRemoved)) + ' items were removed')
+	print(str(len(itemsWereRemoved)) + ' items were removed')
+	logFile.info(str(len(itemsWereRemoved)) + ' items were removed')
 	
 	print('There are ' + str(len(newItems)) + ' new items')
 	logFile.info('There are ' + str(len(newItems)) + ' new items')
