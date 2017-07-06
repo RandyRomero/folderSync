@@ -267,14 +267,21 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 				if snapA[key][2] != snapB[correspondingFileInB][2]:
 					# if sizes of files are not equal, skip binary comparison
 					checkAgeFiles()
-				else:		
-					with open(snapA[key][1][0], 'rb') as f1:
-						with open(snapB[correspondingFileInB][1][0], 'rb') as f2:
-							if f1.read() == f2.read():
-								# byte-to-byte comparison
-								equalFiles.append(snapA[key])
-							else:
+				else:
+					if snapA[key][2] > 1024**3:
+						print('It\'s gonna take some time, be patiet.')	
+					with open(snapA[key][1][0], 'rb') as f1, open(snapB[correspondingFileInB][1][0], 'rb') as f2:
+						while True:
+							# byte-to-byte comparison with buffer
+							b1 = f1.read(8192)
+							b2 = f2.read(8192)
+							if b1 != b2:
 								checkAgeFiles()
+								break
+							if not b1:
+								equalFiles.append(snapA[key])
+								break
+
 		else:
             # if file doesn't exist in B -> add it in list to be copied from A
 			notExistInB.append(snapA[key])
@@ -307,26 +314,26 @@ def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecond
 		logFile.info(path[0])
 	logFile.info('\n')	
 
-	print(str(len(notExistInB)) + ' item(s) from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
-	logFile.info(str(len(notExistInB)) + ' items from  ' + firstFolder + ' don\'t exist in ' + secondFolder)
+	print(str(len(notExistInB)) + ' items from  ' + firstFolder + ' don\'t exist in \'' + secondFolder + '\'')
+	logFile.info(str(len(notExistInB)) + ' items from  ' + firstFolder + ' don\'t exist in \'' + secondFolder + '\'')
 	for path in notExistInB:
 		logFile.info(path[0])
 	logFile.info('\n')
 
-	print(str(len(notExistInA)) + ' item(s) from  ' + secondFolder + ' don\'t exist in ' + firstFolder)
-	logFile.info(str(len(notExistInA)) + ' item(s) from  ' + secondFolder + ' don\'t exist in ' + firstFolder)
+	print(str(len(notExistInA)) + ' item(s) from  ' + secondFolder + ' don\'t exist in \'' + firstFolder + '\'')
+	logFile.info(str(len(notExistInA)) + ' item(s) from  ' + secondFolder + ' don\'t exist in \'' + firstFolder + '\'')
 	for path in notExistInA:
 		logFile.info(path[0])
 	logFile.info('\n')	
 
-	print(str(len(toBeUpdatedFromAtoB)) + ' item(s) need to update in ' + secondFolder)
-	logFile.info(str(len(toBeUpdatedFromAtoB)) + ' item(s) need to update in ' + secondFolder)
+	print(str(len(toBeUpdatedFromAtoB)) + ' item(s) need to update in \'' + secondFolder + '\'')
+	logFile.info(str(len(toBeUpdatedFromAtoB)) + ' item(s) need to update in \'' + secondFolder + '\'')
 	for path in toBeUpdatedFromAtoB:
 		logFile.info(path[0])
 	logFile.info('\n')	
 
-	print(str(len(toBeUpdatedFromBtoA)) + ' item(s) need to update in ' + firstFolder)
-	logFile.info(str(len(toBeUpdatedFromBtoA)) + ' item(s) need to update in ' + firstFolder)
+	print(str(len(toBeUpdatedFromBtoA)) + ' item(s) need to update in \'' + firstFolder + '\'')
+	logFile.info(str(len(toBeUpdatedFromBtoA)) + ' item(s) need to update in \'' + firstFolder + '\'')
 	for path in toBeUpdatedFromBtoA:
 		logFile.info(path[0])
 	logFile.info('\n')
