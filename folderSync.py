@@ -5,7 +5,15 @@
 # But script should be able to sync in both ways.
 # And keep track of changes in both folders.'''
 
-import logging, math, os, re, shutil, send2trash, shelve, sys, time 
+import logging
+import math
+import os
+import re
+import shutil
+import send2trash
+import shelve
+import sys
+import time
 # import platform
 
 firstFolder = ''
@@ -23,7 +31,7 @@ logConsole.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(levelname)s %(asctime)s line %(lineno)s: %(message)s') 
 # define format of logging messages
 
-timestr = time.strftime('%Y-%m-%d__%Hh%Mm')
+timetr = time.strftime('%Y-%m-%d__%Hh%Mm')
 newLogName = os.path.join('log', 'log_' + timestr + '.txt')
 
 if os.path.exists('.\log'):
@@ -34,12 +42,13 @@ if os.path.exists('.\log'):
         while os.path.exists(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt')):
             i += 1
             continue
-        file_handler = logging.FileHandler(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt'), encoding='utf8')
+        file_handler = logging.FileHandler(os.path.join('log', 'log ' + timestr + '(' +
+                                                        str(i) + ').txt'), encoding='utf8')
     else:
         file_handler = logging.FileHandler(newLogName, encoding='utf8')
 else:
     os.mkdir('.\log')
-    file_handler = logging.FileHandler(os.path.join(newLogName, encoding='utf8'))
+    file_handler = logging.FileHandler(newLogName, encoding='utf8')
 
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
@@ -68,6 +77,7 @@ def choose_folder():
             print('Got it!')
             logFile.info('Got it!')
             return path_to_folder
+
 
 def menu_choose_folders():
     # let user choose folders and check them not to have the same path
