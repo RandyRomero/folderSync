@@ -1,26 +1,27 @@
 #! python3
 
-'''Program that can sync all files and folders between two chosen folders. 
-    I need it to keep my photo-backup updated.
-    But script should be able to sync in both ways.
-    And keep track of changes in both folders.'''
+# Program that can sync all files and folders between two chosen folders.
+# I need it to keep my photo-backup updated.
+# But script should be able to sync in both ways.
+# And keep track of changes in both folders.'''
 
 import logging, math, os, re, shutil, send2trash, shelve, sys, time 
-#import platform
+# import platform
 
-############################ Set loggers ####################################
+firstFolder = ''
+secondFolder = ''
 
 logFile = logging.getLogger('fs1') 
-#create logger for this specific module for logging to file
+# create logger for this specific module for logging to file
 
 logFile.setLevel(logging.DEBUG)
-#set level of messages to be logged to file
+# set level of messages to be logged to file
 
 logConsole = logging.getLogger('fs2')
 logConsole.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter('%(levelname)s %(asctime)s line %(lineno)s: %(message)s') 
-#define format of logging messages
+# define format of logging messages
 
 timestr = time.strftime('%Y-%m-%d__%Hh%Mm')
 newLogName = os.path.join('log', 'log_' + timestr + '.txt')
@@ -30,8 +31,7 @@ if os.path.exists('.\log'):
 
     if os.path.exists(newLogName):
         i = 2
-        while os.path.exists(os.path.join('log', 'log ' + timestr +
-            '(' + str(i) + ').txt')):
+        while os.path.exists(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt')):
             i += 1
             continue
         file_handler = logging.FileHandler(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt'), encoding='utf8')
@@ -55,22 +55,26 @@ logConsole.addHandler(stream_handler)
 def choose_folder():
     # used to check validity of file's path given by user
     while True:
-        pathToFolder = input('Path: ')
-        if not os.path.exists(pathToFolder):
+        path_to_folder = input('Path: ')
+        if not os.path.exists(path_to_folder):
             print('This folder doesn\'t exist. Write another one.')
             logFile.info('This folder doesn\'t exist. Write another one.')
             continue
-        if not os.path.isdir(pathToFolder):
+        if not os.path.isdir(path_to_folder):
             print('You should denote path to folder, not to file. Try again.')
             logFile.info('You should denote path to folder, not to file. Try again.')
             continue
-        elif os.path.exists(pathToFolder) and os.path.isdir(pathToFolder):
+        elif os.path.exists(path_to_folder) and os.path.isdir(path_to_folder):
             print('Got it!')
             logFile.info('Got it!')
-            return pathToFolder
+            return path_to_folder
 
-def menuChooseFolders():
+def menu_choose_folders():
     # let user choose folders and check them not to have the same path
+
+    global firstFolder
+    global secondFolder
+
     while True:
         print('Please, choose first folder to sync.')
         logFile.info('Please, choose first folder to sync.')
@@ -204,11 +208,9 @@ def getChangesBetweenStatesOfFolders(pathToFolder, rootOfPath):
 
 # def highComparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder):
 
-
-    ''' 1. Comapre files that were not removed 
-        2. Compare by modfication time and size
-        3. If size is equal, but mtime is different, check byte-by-byte'''
-
+    # 1. Compare files that were not removed
+    # Compare by modification time and size
+    # 3. If size is equal, but mtime is different, check byte-by-byte
 
 def lowSnapshotComparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, level):
     '''compare files in binary mode if folders haven't been synced before'''
@@ -488,8 +490,7 @@ def syncFiles(compareResult, firstFolder, secondFolder):
     logFile.info('--- {0:.3f} seconds ---\n'.format(time.time() - startTime))
     # TODO make printing and logging how many files were copied and what is their total size
 
-
-firstFolder, secondFolder = menuChooseFolders()
+menu_choose_folders()
 
 firstFolderSynced = hasItEverBeenSynced(firstFolder)
 logFile.debug(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
