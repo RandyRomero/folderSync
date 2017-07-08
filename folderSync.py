@@ -19,47 +19,52 @@ import time
 firstFolder = ''
 secondFolder = ''
 
-logFile = logging.getLogger('fs1') 
-# create logger for this specific module for logging to file
 
-logFile.setLevel(logging.DEBUG)
-# set level of messages to be logged to file
+def set_loggers():
+    log_file = logging.getLogger('fs1')
+    # create logger for this specific module for logging to file
 
-logConsole = logging.getLogger('fs2')
-logConsole.setLevel(logging.DEBUG)
+    log_file.setLevel(logging.DEBUG)
+    # set level of messages to be logged to file
 
-formatter = logging.Formatter('%(levelname)s %(asctime)s line %(lineno)s: %(message)s') 
-# define format of logging messages
+    log_console = logging.getLogger('fs2')
+    log_console.setLevel(logging.DEBUG)
 
-timetr = time.strftime('%Y-%m-%d__%Hh%Mm')
-newLogName = os.path.join('log', 'log_' + timestr + '.txt')
+    formatter = logging.Formatter('%(levelname)s %(asctime)s line %(lineno)s: %(message)s')
+    # define format of logging messages
 
-if os.path.exists('.\log'):
-    ''' create new log every time when script starts instead of writing in the same file '''
+    timestr = time.strftime('%Y-%m-%d__%Hh%Mm')
+    newLogName = os.path.join('log', 'log_' + timestr + '.txt')
 
-    if os.path.exists(newLogName):
-        i = 2
-        while os.path.exists(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt')):
-            i += 1
-            continue
-        file_handler = logging.FileHandler(os.path.join('log', 'log ' + timestr + '(' +
-                                                        str(i) + ').txt'), encoding='utf8')
+    if os.path.exists('.\log'):
+        ''' create new log every time when script starts instead of writing in the same file '''
+
+        if os.path.exists(newLogName):
+            i = 2
+            while os.path.exists(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt')):
+                i += 1
+                continue
+            file_handler = logging.FileHandler(os.path.join('log', 'log ' + timestr + '(' +
+                                                            str(i) + ').txt'), encoding='utf8')
+        else:
+            file_handler = logging.FileHandler(newLogName, encoding='utf8')
     else:
+        os.mkdir('.\log')
         file_handler = logging.FileHandler(newLogName, encoding='utf8')
-else:
-    os.mkdir('.\log')
-    file_handler = logging.FileHandler(newLogName, encoding='utf8')
 
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(formatter)
-file_handler.setFormatter(formatter)
-# set format to both handlers
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+    # set format to both handlers
 
 
-logFile.addHandler(file_handler)
-logConsole.addHandler(stream_handler)
-# apply handler to this module (folderSync.py)
+    log_file.addHandler(file_handler)
+    log_console.addHandler(stream_handler)
+    # apply handler to this module (folderSync.py)
 
+    return log_file, log_console
+
+logFile, logConsole = set_loggers()
 
 def choose_folder():
     # used to check validity of file's path given by user
@@ -499,6 +504,7 @@ def syncFiles(compareResult, firstFolder, secondFolder):
     print('--- {0:.3f} seconds ---\n'.format(time.time() - startTime))
     logFile.info('--- {0:.3f} seconds ---\n'.format(time.time() - startTime))
     # TODO make printing and logging how many files were copied and what is their total size
+
 
 menu_choose_folders()
 
