@@ -429,6 +429,28 @@ def low_snapshot_comparison(first_folder, second_folder, root_first_folder, root
     return not_exist_in_a, not_exist_in_b, to_be_updated_from_b_to_a, to_be_updated_from_a_to_b
 
 
+def store_snapshot_before_exit(folder_to_take_snapshot, root_folder, folder_synced):
+
+    # Store state of folder to be synced after it was synced on storage
+    if folder_synced:
+        shel_file = shelve.open(os.path.join(folder_to_take_snapshot, '.folderSyncSnapshot', 'snapshot'))
+    else:
+        os.mkdir(os.path.join(folder_to_take_snapshot, '.folderSyncSnapshot'))
+        shel_file = shelve.open(os.path.join(folder_to_take_snapshot, '.folderSyncSnapshot', 'snapshot'))
+
+    snapshot = get_snapshot(folder_to_take_snapshot, root_folder)
+
+    store_time = time.strftime('%Y-%m-%d %Hh-%Mm')
+    shel_file['path'] = folder_to_take_snapshot
+    shel_file['snapshot'] = snapshot
+    shel_file['date'] = store_time
+
+    print('Snapshot of ' + root_folder + ' was stored in ' + folder_to_take_snapshot + ' at ' + store_time)
+    logFile.info('Snapshot of ' + root_folder + ' was stored in ' + folder_to_take_snapshot + ' at ' + store_time)
+
+    shel_file.close()
+
+
 def sync_files(compare_result, first_folder, second_folder):
     # take lists with files to copy and copy them
 
@@ -520,6 +542,10 @@ def sync_files(compare_result, first_folder, second_folder):
     print('--- {0:.3f} seconds ---\n'.format(time.time() - start_time))
     logFile.info('--- {0:.3f} seconds ---\n'.format(time.time() - start_time))
 
+    store_snapshot_before_exit(firstFolder, rootFirstFolder, firstFolderSynced)
+    store_snapshot_before_exit(secondFolder, rootSecondFolder, secondFolderSynced)
+    # uncomment two lines above for testing without it / don't delete it
+
 menu_choose_folders()
 
 firstFolderSynced = has_it_ever_been_synced(firstFolder)
@@ -577,32 +603,6 @@ else:
     if numberFilesToTransfer > 0:
         # call sync function if there is something to sync
         menu_before_sync()
-
-
-def store_snapshot_before_exit(folder_to_take_snapshot, root_folder, folder_synced):
-    # TODO call it only if files were synced otherwise it does not make sense
-    # Store state of folder to be synced after it was synced on storage
-    if folder_synced:
-        shel_file = shelve.open(os.path.join(folder_to_take_snapshot, '.folderSyncSnapshot', 'snapshot'))
-    else:
-        os.mkdir(os.path.join(folder_to_take_snapshot, '.folderSyncSnapshot'))
-        shel_file = shelve.open(os.path.join(folder_to_take_snapshot, '.folderSyncSnapshot', 'snapshot'))
-
-    snapshot = get_snapshot(folder_to_take_snapshot, root_folder)
-
-    store_time = time.strftime('%Y-%m-%d %Hh-%Mm')
-    shel_file['path'] = folder_to_take_snapshot
-    shel_file['snapshot'] = snapshot
-    shel_file['date'] = store_time
-
-    print('Snapshot of ' + root_folder + ' was stored in ' + folder_to_take_snapshot + ' at ' + store_time)
-    logFile.info('Snapshot of ' + root_folder + ' was stored in ' + folder_to_take_snapshot + ' at ' + store_time)
-
-    shel_file.close()
-
-store_snapshot_before_exit(firstFolder, rootFirstFolder, firstFolderSynced)
-store_snapshot_before_exit(secondFolder, rootSecondFolder, secondFolderSynced)
-# uncomment two lines above for testing without it / don't delete it 
 
 print('Goodbye.')
 logFile.info('Goodbye.')
