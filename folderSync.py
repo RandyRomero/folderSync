@@ -197,17 +197,17 @@ def get_changes_between_states_of_folders(path_to_folder, root_of_path):
     new_items = []
 
     for key in current_folder_snapshot.keys():
-        items_from_current_snapshot.append(key)
+        items_from_current_snapshot.append(key[1][3])
         # get current list of paths of files/folders
         # in order to check it against previous list
 
     for key in previous_snapshot.keys():
-        items_from_prev_snapshot.append(previous_snapshot[key])
+        items_from_prev_snapshot.append(key[1][3])
         # get list of paths of files from previous folder snapshot
 
         if key not in items_from_current_snapshot:
             logFile.info(key + ' WAS REMOVED')
-            items_were_removed.append(key)
+            items_were_removed.append(key[1][3])
 
     for path in items_from_current_snapshot:
         if path not in items_from_prev_snapshot:
