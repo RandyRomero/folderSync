@@ -233,7 +233,7 @@ def get_changes_between_states_of_folders(path_to_folder, root_of_path):
     # 3. If size is equal, but mtime is different, check byte-by-byte
 
 
-def low_snapshot_comparison(first_folder, second_folder, root_first_folder, root_second_folder, level):
+def snapshot_comparison(first_folder, second_folder, root_first_folder, root_second_folder, level):
     # compare files in binary mode if folders haven't been synced before
 
     start_time = time.time()
@@ -585,18 +585,18 @@ def menu_before_sync():
             logFile.info('Error of input. Try again.')
             continue
 
-if firstFolderSynced:
-    get_changes_between_states_of_folders(firstFolder, rootFirstFolder)
-
-if secondFolderSynced:
-    get_changes_between_states_of_folders(secondFolder, rootSecondFolder)
+# if firstFolderSynced:
+#     get_changes_between_states_of_folders(firstFolder, rootFirstFolder)
+#
+# if secondFolderSynced:
+#     get_changes_between_states_of_folders(secondFolder, rootSecondFolder)
 
 if firstFolderSynced and secondFolderSynced:
-    compareResult = low_snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'high')
+    compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'high')
 elif firstFolderSynced or secondFolderSynced:
-    compareResult = low_snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'middle')
+    compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'middle')
 else:
-    compareResult = low_snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'low')
+    compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'low')
 
     numberFilesToTransfer = len(compareResult[0] + compareResult[1] + compareResult[2] + compareResult[3])
     # check how many files script should transfer in total
