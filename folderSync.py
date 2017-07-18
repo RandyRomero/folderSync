@@ -468,7 +468,6 @@ def sync_files(compare_result, first_folder, second_folder):
     print('Start syncing files...')
 
     def remove_items(files_to_remove):
-        # TODO remove files
         print('Removing files...')
 
         for full_path in files_to_remove:
@@ -625,6 +624,11 @@ else:
     if numberFilesToTransfer > 0:
         # call sync function if there is something to sync
         menu_before_sync('low')
+    else:
+        store_snapshot_before_exit(firstFolder, rootFirstFolder, firstFolderSynced)
+        store_snapshot_before_exit(secondFolder, rootSecondFolder, secondFolderSynced)
+        # store snapshots of folders if they have been synced but no differences have been found
+
 
 print('Goodbye.')
 logFile.info('Goodbye.')
