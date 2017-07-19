@@ -208,7 +208,9 @@ def get_changes_between_states_of_folders(path_to_folder, root_of_path):
         if key not in items_from_current_snapshot:
             # if item from previous snapshot not in current snapshot
             logFile.info(key + ' WAS REMOVED')
-            items_were_removed.append(key)
+            items_were_removed.append(previous_snapshot[key][1][3])
+            # add path without root folder to list because we should compare it later
+            # against path with another root folder
 
     for path in items_from_current_snapshot:
         if path not in items_from_prev_snapshot:
@@ -311,7 +313,7 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                     check_age_files()
                 else:
                     if snap_a[key][2] > 1024**3:
-                        print('It\'s gonna take some time, be patiet.')
+                        print('It\'s gonna take some time, be patient.')
                     with open(snap_a[key][1][0], 'rb') as f1, open(snap_b[corresponding_file_in_b][1][0], 'rb') as f2:
                         while True:
                             # byte-to-byte comparison with buffer
@@ -326,11 +328,12 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
 
         else:
             if level == 'high':
-                if snap_a[key][1][2] in removed_from_2_folder:
+                if snap_a[key][1][3] in removed_from_2_folder:
                     remove_from_a.append(snap_a[key][1][0])
                     # if item was removed from B - add it to list of items
                     # which will be removed from A
                 else:
+                    # TODO figure out what should be here
                     print('Hello! Anybody home?')
             elif level == 'low':
                 not_exist_in_b.append(snap_a[key])
@@ -342,8 +345,9 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         # check which files from B exist in A
         if not snap_b[key][1][3] in paths_of_snap_a:
             if level == 'high':
-                if snap_b[key][1][2] in removed_from_1_folder:
+                if snap_b[key][1][3] in removed_from_1_folder:
                     remove_from_b.append(snap_b[key][1][0])
+                    # TODO Find why is nothing added to list of files to be removed
             elif level == 'low':
                 not_exist_in_a.append(snap_b[key])
                 if snap_b[key][0] == 'file':
@@ -419,16 +423,21 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
     logFile.info('Total size of files to transfer is ' +
                  str("{0:.0f}".format(total_size_to_transfer / 1024 / 1024)) + ' MB.')
 
+    # TODO print and log total number and size of files to remove
+
     print('--- {0:.3f} --- seconds\n'.format(time.time() - start_time))
     logFile.info('--- {0:.3f} --- seconds'.format(time.time() - start_time))
 
-    # for path in paths_of_snap_b:
-    # 	logFile.debug('ITEM IN B: ' + path)
-    # for path in paths_of_snap_a:
-    # 	logFile.debug('ITEM IN A: ' + path)
+    result = [not_exist_in_a, not_exist_in_b, to_be_updated_from_b_to_a, to_be_updated_from_a_to_b, remove_from_a,
+              remove_from_b]
 
-    return not_exist_in_a, not_exist_in_b, to_be_updated_from_b_to_a, to_be_updated_from_a_to_b, \
-        remove_from_a, remove_from_b
+    number_files_to_transfer = 0
+    for array in result:
+        number_files_to_transfer += len(array)
+    # count how many files script should transfer in total
+
+    result.append(number_files_to_transfer)
+    return result
 
 
 def store_snapshot_before_exit(folder_to_take_snapshot, root_folder, folder_synced):
@@ -458,22 +467,31 @@ def sync_files(compare_result, first_folder, second_folder):
 
     start_time = time.time()
     not_exist_in_a, not_exist_in_b, to_be_updated_from_bto_a, to_be_updated_from_ato_b, \
-        remove_from_a, remove_from_b = compare_result
+        remove_from_a, remove_from_b, number_files_to_handle = compare_result
 
     were_copied = 0
     total_size = 0
     were_created = 0
+    were_updated = 0
+    were_removed = 0
 
     logFile.info('Start syncing files...')
     print('Start syncing files...')
 
     def remove_items(files_to_remove):
+
+        nonlocal were_removed
+
         print('Removing files...')
+        logFile.info('Removing files...')
+
+        #TODO Somehow avoid removing of files that have been alreday removed with folder
 
         for full_path in files_to_remove:
             send2trash.send2trash(full_path)
             print(full_path + ' were removed')
             logFile.info(full_path + ' were removed')
+            were_removed += 1
 
     def copy_not_exist_items(not_exist_items, path_to_root):
         # Copy files that don't exist in one of folders
@@ -513,6 +531,7 @@ def sync_files(compare_result, first_folder, second_folder):
         # Update file by deleting old one and copying new one instead of it
 
         nonlocal total_size
+        nonlocal were_updated
 
         for array in to_be_updated:
             # array contains list with two items: full path of item to be copied and full path of file to be copied
@@ -522,6 +541,7 @@ def sync_files(compare_result, first_folder, second_folder):
                 print('- ' + array[1] + ' was updated.')
                 logFile.info('- ' + array[1] + ' was updated.')
                 total_size += array[2]
+                were_updated += 1
             elif not os.path.exists(array[0]):
                 print(array[0] + ' hasn\'t been found! Can\'t handle it.')
                 logFile.warning(array[0] + ' hasn\'t been found! Can\'t handle it.')
@@ -553,6 +573,12 @@ def sync_files(compare_result, first_folder, second_folder):
     print(str(were_copied) + ' files were copied.')
     logFile.info(str(were_copied) + ' files were copied.')
 
+    print(str(were_updated) + ' files were updated')
+    logFile.info(str(were_updated) + ' files were updated')
+
+    print(str(were_removed) + ' files were removed')
+    logFile.info(str(were_removed) + ' files were removed')
+
     print('Total size of files were copied or updated is {0:.2f} MB.'.format(total_size / 1024 / 1024))
     logFile.info('Total size of files were copied or updated is {0:.2f} MB.'.format(total_size / 1024 / 1024))
 
@@ -581,21 +607,14 @@ rootSecondFolder = re.search(r'(\w+$)', secondFolder).group(0)
 # get all paths of all files and folders with properties from folders to be compared
 
 
-def menu_before_sync(level):
+def menu_before_sync():
     # Menu to ask user if he wants to start transfering files
     while True:
         start_syncing = input('Do you want to sync these files? y/n: ').lower()
         logFile.info('Do you want to sync these files? y/n: ')
         if start_syncing == 'y':
-            if level == 'high':
-                logConsole.debug('Call function that syncing folders that have already been synced')
-                break
-            elif level == 'middle':
-                # if one or neither of two folders have been synced already
-                logConsole.debug('Call function that syncing folders that have already been synced')
-            elif level == 'low':
-                sync_files(compareResult, firstFolder, secondFolder)
-                break
+            sync_files(compareResult, firstFolder, secondFolder)
+            break
         elif start_syncing == 'n':
             # continue without copy/remove files
             break
@@ -604,26 +623,21 @@ def menu_before_sync(level):
             logFile.info('Error of input. Try again.')
             continue
 
-# if firstFolderSynced:
-#     get_changes_between_states_of_folders(firstFolder, rootFirstFolder)
-#
-# if secondFolderSynced:
-#     get_changes_between_states_of_folders(secondFolder, rootSecondFolder)
-
 if firstFolderSynced and secondFolderSynced:
     compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'high')
     # TODO call sync menu with parameters
+    if compareResult[6] > 0:
+        # call sync function if there is something to sync
+        menu_before_sync()
 
 elif firstFolderSynced or secondFolderSynced:
     compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'middle')
 else:
     compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'low')
 
-    numberFilesToTransfer = len(compareResult[0] + compareResult[1] + compareResult[2] + compareResult[3])
-    # check how many files script should transfer in total
-    if numberFilesToTransfer > 0:
+    if compareResult[6] > 0:
         # call sync function if there is something to sync
-        menu_before_sync('low')
+        menu_before_sync()
     else:
         store_snapshot_before_exit(firstFolder, rootFirstFolder, firstFolderSynced)
         store_snapshot_before_exit(secondFolder, rootSecondFolder, secondFolderSynced)
