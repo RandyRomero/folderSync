@@ -456,7 +456,7 @@ def store_snapshot_before_exit(folder_to_take_snapshot, root_folder, folder_sync
     shel_file['snapshot'] = snapshot
     shel_file['date'] = store_time
 
-    print('Snapshot of ' + root_folder + ' was stored in ' + folder_to_take_snapshot + ' at ' + store_time)
+    # print('Snapshot of ' + root_folder + ' was stored in ' + folder_to_take_snapshot + ' at ' + store_time)
     logFile.info('Snapshot of ' + root_folder + ' was stored in ' + folder_to_take_snapshot + ' at ' + store_time)
 
     shel_file.close()
@@ -485,13 +485,18 @@ def sync_files(compare_result, first_folder, second_folder):
         print('Removing files...')
         logFile.info('Removing files...')
 
-        #TODO Somehow avoid removing of files that have been alreday removed with folder
+        # TODO Somehow avoid removing of files that have been already removed with folder
 
         for full_path in files_to_remove:
-            send2trash.send2trash(full_path)
-            print(full_path + ' were removed')
-            logFile.info(full_path + ' were removed')
-            were_removed += 1
+            if os.path.exists(full_path):
+                send2trash.send2trash(full_path)
+                print(full_path + ' were removed')
+                logFile.info(full_path + ' were removed')
+                were_removed += 1
+            else:
+                # item was removed with its folder before
+                were_removed += 1
+                continue
 
     def copy_not_exist_items(not_exist_items, path_to_root):
         # Copy files that don't exist in one of folders
