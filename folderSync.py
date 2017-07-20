@@ -117,13 +117,18 @@ def has_it_ever_been_synced(path_to_root_folder):
         return False
 
 
-def get_snapshot(path_to_root_folder, root_folder):
+def get_snapshot(path_to_root_folder, root_folder, mode):
     # get all file and folder paths,
     # and collect file size and file time of modification
 
     start_time = time.time()
-    print('\nGetting snapshot of ' + path_to_root_folder + '...')
-    logFile.info('\nGetting snapshot of ' + path_to_root_folder + '...')
+
+    if mode == 'explicit':
+        print('\nGetting snapshot of ' + path_to_root_folder + '...')
+        logFile.info('\nGetting snapshot of ' + path_to_root_folder + '...')
+    elif mode == 'implicit':
+        # in order not to print out this message any time function invoked
+        logFile.info('\nGetting snapshot of ' + path_to_root_folder + '...')
 
     folders_number = 0
     files_number = 0
@@ -131,8 +136,33 @@ def get_snapshot(path_to_root_folder, root_folder):
 
     current_snapshot = {}
 
-    for root, folders, files in os.walk(path_to_root_folder):
+    def get_snapshot_print_out():
+        # logging to file result of function
+        nonlocal folders_number
+        nonlocal path_to_root_folder
+        nonlocal total_size
+        nonlocal start_time
 
+        print('There are ' + str(folders_number) + ' folders and ' +
+              str(files_number) + ' files in ' + path_to_root_folder)
+        print('Total size of ' + path_to_root_folder + ' is ' +
+              str("{0:.0f}".format(total_size / 1024 / 1024)) + ' MB.')
+        print('--- {0:.3f} seconds ---\n'.format(time.time() - start_time))
+
+    def get_snapshot_log_out():
+        # logging to file result of function
+        nonlocal folders_number
+        nonlocal path_to_root_folder
+        nonlocal total_size
+        nonlocal start_time
+
+        logFile.info('There are ' + str(folders_number) + ' folders and ' +
+                     str(files_number) + ' files in ' + path_to_root_folder)
+        logFile.info('Total size of ' + path_to_root_folder + ' is ' +
+                     str("{0:.0f}".format(total_size / 1024 / 1024)) + ' MB.\n')
+        logFile.info('--- {0:.3f} seconds ---\n'.format(time.time() - start_time))
+
+    for root, folders, files in os.walk(path_to_root_folder):
         folders[:] = [x for x in folders if not x == '.folderSyncSnapshot']
         # only add to list folders that not '.folderSyncSnapshot'
 
@@ -161,17 +191,14 @@ def get_snapshot(path_to_root_folder, root_folder):
             # math.ceil for rounding float because otherwise it is to precise for our purpose
             files_number += 1
 
-    print('There are ' + str(folders_number) + ' folders and ' +
-          str(files_number) + ' files in ' + path_to_root_folder)
-    logFile.info('There are ' + str(folders_number) + ' folders and ' +
-                 str(files_number) + ' files in ' + path_to_root_folder)
-    print('Total size of ' + path_to_root_folder + ' is ' +
-          str("{0:.0f}".format(total_size / 1024 / 1024)) + ' MB.')
-    logFile.info('Total size of ' + path_to_root_folder + ' is ' +
-                 str("{0:.0f}".format(total_size / 1024 / 1024)) + ' MB.\n')
+    if mode == 'explicit':
+        get_snapshot_log_out()
+        get_snapshot_print_out()
 
-    print('--- {0:.3f} seconds ---\n'.format(time.time() - start_time))
-    logFile.info('--- {0:.3f} seconds ---\n'.format(time.time() - start_time))
+    if mode == 'implicit':
+        # in order not to print out this message any time function invoked
+        get_snapshot_log_out()
+
     return current_snapshot
 
 
@@ -186,7 +213,7 @@ def get_changes_between_states_of_folders(path_to_folder, root_of_path):
         print('Can\'t open stored snapshot. Exit.')
         sys.exit()
 
-    current_folder_snapshot = get_snapshot(path_to_folder, root_of_path)
+    current_folder_snapshot = get_snapshot(path_to_folder, root_of_path, 'explicit')
     # analyse current state of folder
     previous_snapshot = shel_file['snapshot']
     # load previous state of folder from shelve db
@@ -264,8 +291,8 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
     '''
 
     if level == 'low':
-        snap_a = get_snapshot(first_folder, root_first_folder)
-        snap_b = get_snapshot(second_folder, root_second_folder)
+        snap_a = get_snapshot(first_folder, root_first_folder, 'explicit')
+        snap_b = get_snapshot(second_folder, root_second_folder, 'explicit')
     elif level == 'high':
         removed_from_1_folder, snap_a = get_changes_between_states_of_folders(first_folder, root_first_folder)
         removed_from_2_folder, snap_b = get_changes_between_states_of_folders(second_folder, root_second_folder)
@@ -449,7 +476,7 @@ def store_snapshot_before_exit(folder_to_take_snapshot, root_folder, folder_sync
         os.mkdir(os.path.join(folder_to_take_snapshot, '.folderSyncSnapshot'))
         shel_file = shelve.open(os.path.join(folder_to_take_snapshot, '.folderSyncSnapshot', 'snapshot'))
 
-    snapshot = get_snapshot(folder_to_take_snapshot, root_folder)
+    snapshot = get_snapshot(folder_to_take_snapshot, root_folder, 'implicit')
 
     store_time = time.strftime('%Y-%m-%d %Hh-%Mm')
     shel_file['path'] = folder_to_take_snapshot
@@ -484,8 +511,6 @@ def sync_files(compare_result, first_folder, second_folder):
 
         print('Removing files...')
         logFile.info('Removing files...')
-
-        # TODO Somehow avoid removing of files that have been already removed with folder
 
         for full_path in files_to_remove:
             if os.path.exists(full_path):
@@ -636,7 +661,8 @@ if firstFolderSynced and secondFolderSynced:
         menu_before_sync()
 
 elif firstFolderSynced or secondFolderSynced:
-    compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'middle')
+    print('Ooops')
+    # compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'middle')
 else:
     compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'low')
 
