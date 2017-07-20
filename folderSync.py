@@ -360,8 +360,7 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                     # if item was removed from B - add it to list of items
                     # which will be removed from A
                 else:
-                    # TODO figure out what should be here
-                    print('Hello! Anybody home?')
+                    raise Exception('File ' + snap_a[key][1][0] + ' was neither removed nor found ')
             elif level == 'low':
                 not_exist_in_b.append(snap_a[key])
                 # if file doesn't exist in B -> add it in list to be copied from A
