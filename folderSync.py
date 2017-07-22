@@ -216,6 +216,7 @@ def get_changes_between_states_of_folders(path_to_folder, root_of_path):
     current_folder_snapshot = get_snapshot(path_to_folder, root_of_path, 'explicit')
     # analyse current state of folder
     previous_snapshot = shel_file['snapshot']
+    store_date = shel_file['date']
     # load previous state of folder from shelve db
 
     items_from_prev_snapshot = []
@@ -254,7 +255,7 @@ def get_changes_between_states_of_folders(path_to_folder, root_of_path):
     print()
     logFile.info('\n')
 
-    return items_were_removed, new_items, current_folder_snapshot
+    return items_were_removed, new_items, current_folder_snapshot, store_date
 
 # def highComparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder):
 
@@ -288,6 +289,8 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
     size_to_remove_from_b = 0
     snap_a = {}
     snap_b = {}
+    store_date_a = 0
+    store_date_b = 0
     to_be_updated_from_a_to_b = []
     to_be_updated_from_b_to_a = []
     were_removed_from_a = []
@@ -304,8 +307,10 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         snap_a = get_snapshot(first_folder, root_first_folder, 'explicit')
         snap_b = get_snapshot(second_folder, root_second_folder, 'explicit')
     elif level == 'high':
-        were_removed_from_a, new_in_a, snap_a = get_changes_between_states_of_folders(first_folder, root_first_folder)
-        were_removed_from_b, new_in_b, snap_b = get_changes_between_states_of_folders(second_folder, root_second_folder)
+        were_removed_from_a, new_in_a, snap_a, store_date_a = \
+            get_changes_between_states_of_folders(first_folder, root_first_folder)
+        were_removed_from_b, new_in_b, snap_b, store_date_b = \
+            get_changes_between_states_of_folders(second_folder, root_second_folder)
 
     for key in snap_b.keys():
         paths_of_snap_b.append(snap_b[key][1][3])
@@ -466,11 +471,15 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         logFile.info('\n')
 
     if level == 'high':
-        print(str(len(were_removed_from_a)) + ' items were removed from \'' + first_folder)
-        logFile.info(str(len(were_removed_from_a)) + ' items were removed from \'' + first_folder + '\n')
+        print(str(len(were_removed_from_a)) + ' items were removed from \'' + first_folder + ' since ' +
+              store_date_a + '.')
+        logFile.info(str(len(were_removed_from_a)) + ' items were removed from \'' + first_folder + ' since ' +
+                     store_date_a + '.\n')
 
-        print(str(len(were_removed_from_b)) + ' items were removed from \'' + second_folder)
-        logFile.info(str(len(were_removed_from_b)) + ' items were removed from \'' + second_folder + '\n')
+        print(str(len(were_removed_from_b)) + ' items were removed from \'' + second_folder + ' since ' +
+              store_date_b + '.')
+        logFile.info(str(len(were_removed_from_b)) + ' items were removed from \'' + second_folder + ' since ' +
+                     store_date_b + '.\n')
 
         print(str(len(not_exist_in_b)) + ' new items in ' + first_folder)
         logFile.info(str(len(not_exist_in_b)) + ' new items in ' + first_folder + '\n')
