@@ -493,8 +493,8 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
               must_remove_from_b, copy_from_a_to_b, copy_from_b_to_a, level]
 
     number_files_to_transfer = 0
-    for array in result:
-        number_files_to_transfer += len(array)
+    for index in range(len(result) - 1):
+        number_files_to_transfer += len(result[index])
     # count how many files script should transfer in total
 
     result.append(number_files_to_transfer)
@@ -697,8 +697,7 @@ def menu_before_sync():
 
 if firstFolderSynced and secondFolderSynced:
     compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'high')
-    # TODO call sync menu with parameters
-    if compareResult[6] > 0:
+    if compareResult[9] > 0:
         # call sync function if there is something to sync
         menu_before_sync()
 
@@ -708,7 +707,7 @@ elif firstFolderSynced or secondFolderSynced:
 else:
     compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'low')
 
-    if compareResult[6] > 0:
+    if compareResult[9] > 0:
         # call sync function if there is something to sync
         menu_before_sync()
     else:
