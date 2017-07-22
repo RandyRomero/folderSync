@@ -366,21 +366,12 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
 
         else:
             # if file in first folder has not been found in the second folder
-            if level == 'high':
-                if snap_a[key][1][3] in were_removed_from_b:
-                    must_remove_from_a.append(snap_a[key][1][0])
-                    # if item was removed from B - add it to list of items
-                    # which will be removed from A
-                elif snap_a[key][1][3] in new_in_b:  # TODO this is presumably wrong
-                    copy_from_b_to_a.append([snap_b[corresponding_file_in_b][1][0],
-                                            snap_a[key][1][0], snap_b[corresponding_file_in_b][2]])
-                    # if item was created in B - add it to list of files to be copied to A
-                    if snap_a[key][0] == 'file':
-                        size_from_b_to_a += snap_b[corresponding_file_in_b][2]
-                else:
-                    err_message = 'Item ' + snap_a[key][1][0] + ' was neither removed nor found.'
-                    raise Exception(err_message)
-            elif level == 'low':
+            if level == 'high' and snap_a[key][1][3] in were_removed_from_b:
+                must_remove_from_a.append(snap_a[key][1][0])
+                # if item was removed from B - add it to list of items
+                # which will be removed from A
+                continue
+            else:
                 not_exist_in_b.append(snap_a[key])
                 # if file doesn't exist in B -> add it in list to be copied from A
                 if snap_a[key][0] == 'file':
@@ -389,22 +380,29 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
     for key in snap_b.keys():
         # check which files from B exist in A
         if not snap_b[key][1][3] in paths_of_snap_a:
-            if level == 'high':
-                if snap_b[key][1][3] in were_removed_from_a:
-                    must_remove_from_b.append(snap_b[key][1][0])
-                    # if item was removed from A - add it to list of items
-                    # which will be removed from B
-                elif snap_b[key][1][3] in new_in_a:  # TODO Think again
-                    copy_from_a_to_b.append([snap_a[key][1][0], snap_b[corresponding_file_in_b][1][0], snap_a[key][2]])
-                    # if item was created in A - add it to list of files to be copied to B
-                else:
-                    err_message = 'Item ' + snap_b[key][1][0] + ' was neither removed nor found '
-                    raise Exception(err_message)
-            elif level == 'low':
-                # if file doesn't exists in A -> add it in list to be copied from B
+            if level == 'high' and snap_b[key][1][3] in were_removed_from_a:
+                must_remove_from_b.append(snap_b[key][1][0])
+                # if item was removed from A - add it to list of items
+                # which will be removed from B
+            else:
                 not_exist_in_a.append(snap_b[key])
+                # if file doesn't exists in A -> add it in list to be copied from B
                 if snap_b[key][0] == 'file':
                     size_from_b_to_a += snap_b[key][2]
+
+    if len(not_exist_in_b) != len(new_in_a):
+        # should not happened but just in case
+        print('Warning! Number of new files in ' + first_folder + ' does not match number of absent items in ' +
+              second_folder)
+        logFile.warning('Warning! Number of new files in ' + first_folder +
+                        ' does not match number of absent items in ' + second_folder)
+
+    if len(not_exist_in_a) != len(new_in_b):
+        # should not happened but just in case
+        print('Warning! Number of new items in ' + second_folder + ' does not match number of absent items in ' +
+              first_folder)
+        logFile.warning('Warning! Number of new items in ' + second_folder +
+                        ' does not match number of absent items in ' + first_folder)
 
     '''result messages to console and log file'''
 
@@ -464,11 +462,11 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         print(str(len(must_remove_from_b)) + ' items were removed from \'' + second_folder)
         logFile.info(str(len(must_remove_from_b)) + ' items were removed from \'' + second_folder + '\n')
 
-        print(str(len(copy_from_a_to_b)) + ' new items in ' + first_folder)
-        logFile.info(str(len(copy_from_a_to_b)) + ' new items in ' + first_folder + '\n')
+        print(str(len(not_exist_in_b)) + ' new items in ' + first_folder)
+        logFile.info(str(len(not_exist_in_b)) + ' new items in ' + first_folder + '\n')
 
-        print(str(len(copy_from_b_to_a)) + ' new items in ' + second_folder + '\n')
-        logFile.info(str(len(copy_from_b_to_a)) + ' new items in ' + second_folder + '\n')
+        print(str(len(not_exist_in_a)) + ' new items in ' + second_folder + '\n')
+        logFile.info(str(len(not_exist_in_a)) + ' new items in ' + second_folder + '\n')
 
         total_number_to_transfer = len(to_be_updated_from_a_to_b) + len(to_be_updated_from_b_to_a) + \
             len(must_remove_from_a) + len(must_remove_from_b) + len(new_in_a) + len(new_in_b)
