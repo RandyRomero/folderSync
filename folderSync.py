@@ -442,14 +442,14 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         logFile.info(path[1][0])
     logFile.info('\n')
 
-    print(str(len(to_be_updated_from_a_to_b)) + ' item(s) need to update in \'' + second_folder + '\'')
-    logFile.info(str(len(to_be_updated_from_a_to_b)) + ' item(s) need to update in \'' + second_folder + '\'')
+    print(str(len(to_be_updated_from_a_to_b)) + ' item(s) has newer version in \'' + first_folder + '\'')
+    logFile.info(str(len(to_be_updated_from_a_to_b)) + ' item(s) has newer version in \'' + first_folder + '\'')
     for path in to_be_updated_from_a_to_b:
         logFile.info(path[1][0])
     logFile.info('\n')
 
-    print(str(len(to_be_updated_from_b_to_a)) + ' item(s) need to update in \'' + first_folder + '\'')
-    logFile.info(str(len(to_be_updated_from_b_to_a)) + ' item(s) need to update in \'' + first_folder + '\'')
+    print(str(len(to_be_updated_from_b_to_a)) + ' item(s) has newer version in ' + second_folder + '\'')
+    logFile.info(str(len(to_be_updated_from_b_to_a)) + ' item(s) has newer version in ' + second_folder + '\'')
     for path in to_be_updated_from_b_to_a:
         logFile.info(path[1][0])
     logFile.info('\n')
@@ -525,8 +525,6 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
               str("{0:.0f}".format(size_to_remove_from_b / 1024 ** 2)) + ' MB.')
         logFile.info('Size of items to remove from ' + second_folder + ' is ' +
                      str("{0:.0f}".format(size_to_remove_from_b / 1024 ** 2)) + ' MB.')
-
-    # TODO print and log total number and size of files to remove
 
     print('--- {0:.3f} --- seconds\n'.format(time.time() - start_time))
     logFile.info('--- {0:.3f} --- seconds'.format(time.time() - start_time))
@@ -687,11 +685,11 @@ def sync_files(compare_result, first_folder, second_folder):
     print(str(were_copied) + ' files were copied.')
     logFile.info(str(were_copied) + ' files were copied.')
 
-    print(str(were_updated) + ' files were updated')
-    logFile.info(str(were_updated) + ' files were updated')
+    print(str(were_updated) + ' files were updated.')
+    logFile.info(str(were_updated) + ' files were updated.')
 
-    print(str(were_removed) + ' files were removed')
-    logFile.info(str(were_removed) + ' files were removed')
+    print(str(were_removed) + ' files were removed.')
+    logFile.info(str(were_removed) + ' files were removed.')
 
     print('Total size of files were copied or updated is {0:.2f} MB.'.format(total_size / 1024 / 1024))
     logFile.info('Total size of files were copied or updated is {0:.2f} MB.'.format(total_size / 1024 / 1024))
