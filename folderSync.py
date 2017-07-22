@@ -268,27 +268,30 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
 
     start_time = time.time()
 
-    same_path_and_name = []
+    copy_from_a_to_b = []
+    copy_from_b_to_a = []
     equal_files = []
-    to_be_updated_from_b_to_a = []
-    to_be_updated_from_a_to_b = []
-    were_removed_from_a = []
-    were_removed_from_b = []
     must_remove_from_a = []
     must_remove_from_b = []
     new_in_a = []
     new_in_b = []
-    size_from_a_to_b = 0
-    size_from_b_to_a = 0
-    snap_a = {}
-    snap_b = {}
-    paths_of_snap_a = []
-    paths_of_snap_b = []
     not_exist_in_a = []
     not_exist_in_b = []
-    copy_from_a_to_b = []
-    copy_from_b_to_a = []
-    total_number_to_transfer = 0
+    number_to_transfer_from_a_to_b = 0
+    number_to_transfer_from_b_to_a = 0
+    paths_of_snap_a = []
+    paths_of_snap_b = []
+    same_path_and_name = []
+    size_from_a_to_b = 0
+    size_from_b_to_a = 0
+    size_to_remove_from_a = 0
+    size_to_remove_from_b = 0
+    snap_a = {}
+    snap_b = {}
+    to_be_updated_from_a_to_b = []
+    to_be_updated_from_b_to_a = []
+    were_removed_from_a = []
+    were_removed_from_b = []
 
     ''' in each list script adds two version of path to file: 
     first (key) with root folder, second (snap_a[key][1][0]]) with full path.
@@ -315,17 +318,21 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
     def check_age_files():
         nonlocal size_from_a_to_b
         nonlocal size_from_b_to_a
+        nonlocal number_to_transfer_from_a_to_b
+        nonlocal number_to_transfer_from_b_to_a
 
         if snap_a[key][3] > snap_b[corresponding_file_in_b][3]:
             # file in A newer than file in B -> add it to list to be copied from A to B
             to_be_updated_from_a_to_b.append([snap_a[key][1][0], snap_b[corresponding_file_in_b][1][0], snap_a[key][2]])
             # add to list another list with full paths of both files
+            number_to_transfer_from_a_to_b += 1
             size_from_a_to_b += snap_a[key][2]
         elif snap_a[key][3] < snap_b[corresponding_file_in_b][3]:
             # file in A older than file in B -> add it to list to be copied from B to A
             to_be_updated_from_b_to_a.append([snap_b[corresponding_file_in_b][1][0],
                                               snap_a[key][1][0], snap_b[corresponding_file_in_b][2]])
             # add to list another list with full paths of both files
+            number_to_transfer_from_b_to_a += 1
             size_from_b_to_a += snap_b[corresponding_file_in_b][2]
 
     # check A against B
@@ -368,12 +375,15 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
             # if file in first folder has not been found in the second folder
             if level == 'high' and snap_a[key][1][3] in were_removed_from_b:
                 must_remove_from_a.append(snap_a[key][1][0])
+                if snap_a[key][0]:
+                    size_to_remove_from_a += snap_a[key][2]
                 # if item was removed from B - add it to list of items
                 # which will be removed from A
                 continue
             else:
                 not_exist_in_b.append(snap_a[key])
                 # if file doesn't exist in B -> add it in list to be copied from A
+                number_to_transfer_from_a_to_b += 1
                 if snap_a[key][0] == 'file':
                     size_from_a_to_b += snap_a[key][2]
 
@@ -382,11 +392,14 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         if not snap_b[key][1][3] in paths_of_snap_a:
             if level == 'high' and snap_b[key][1][3] in were_removed_from_a:
                 must_remove_from_b.append(snap_b[key][1][0])
+                if snap_b[key][0] == 'file':
+                    size_to_remove_from_b += snap_b[key][2]
                 # if item was removed from A - add it to list of items
                 # which will be removed from B
             else:
                 not_exist_in_a.append(snap_b[key])
                 # if file doesn't exists in A -> add it in list to be copied from B
+                number_to_transfer_from_b_to_a += 1
                 if snap_b[key][0] == 'file':
                     size_from_b_to_a += snap_b[key][2]
 
@@ -452,15 +465,12 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
             logFile.info(path[1][0])
         logFile.info('\n')
 
-        total_number_to_transfer = len(not_exist_in_a) + \
-            len(not_exist_in_b) + len(to_be_updated_from_a_to_b) + len(to_be_updated_from_b_to_a)
-
     if level == 'high':
-        print(str(len(must_remove_from_a)) + ' items were removed from \'' + first_folder)
-        logFile.info(str(len(must_remove_from_a)) + ' items were removed from \'' + first_folder + '\n')
+        print(str(len(were_removed_from_a)) + ' items were removed from \'' + first_folder)
+        logFile.info(str(len(were_removed_from_a)) + ' items were removed from \'' + first_folder + '\n')
 
-        print(str(len(must_remove_from_b)) + ' items were removed from \'' + second_folder)
-        logFile.info(str(len(must_remove_from_b)) + ' items were removed from \'' + second_folder + '\n')
+        print(str(len(were_removed_from_b)) + ' items were removed from \'' + second_folder)
+        logFile.info(str(len(were_removed_from_b)) + ' items were removed from \'' + second_folder + '\n')
 
         print(str(len(not_exist_in_b)) + ' new items in ' + first_folder)
         logFile.info(str(len(not_exist_in_b)) + ' new items in ' + first_folder + '\n')
@@ -468,11 +478,15 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         print(str(len(not_exist_in_a)) + ' new items in ' + second_folder + '\n')
         logFile.info(str(len(not_exist_in_a)) + ' new items in ' + second_folder + '\n')
 
-        total_number_to_transfer = len(to_be_updated_from_a_to_b) + len(to_be_updated_from_b_to_a) + \
-            len(must_remove_from_a) + len(must_remove_from_b) + len(new_in_a) + len(new_in_b)
+    print('Number of items to transfer from ' + first_folder + ' to ' + second_folder + ' is ' +
+          str(number_to_transfer_from_a_to_b) + '.')
+    logFile.info('Number of items to transfer from ' + first_folder + ' to ' + second_folder + ' is ' +
+                 str(number_to_transfer_from_a_to_b) + '.\n')
 
-    print('Total number items to transfer: ' + str(total_number_to_transfer))
-    logFile.info('Total number items to transfer: ' + str(total_number_to_transfer) + '\n')
+    print('Number items to transfer from ' + second_folder + ' to ' + first_folder + ' is ' +
+          str(number_to_transfer_from_b_to_a) + '.')
+    logFile.info('Number items to transfer from ' + second_folder + ' to ' + first_folder + ' is ' +
+                 str(number_to_transfer_from_b_to_a) + '.\n')
 
     print('Total size of files to transfer from ' + first_folder + '  to ' + second_folder + ' is ' +
           str("{0:.0f}".format(size_from_a_to_b / 1024 / 1024)) + ' MB.')
@@ -483,6 +497,25 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
           str("{0:.0f}".format(size_from_b_to_a / 1024 / 1024)) + ' MB.')
     logFile.info('Total size of files to transfer from ' + second_folder + '  to ' + first_folder + ' is ' +
                  str("{0:.0f}".format(size_from_b_to_a / 1024 / 1024)) + ' MB.')
+
+    if level == 'high':
+        print('\nNumber of items to remove from ' + first_folder + ' is ' + str(len(must_remove_from_a)) + '.')
+        logFile.info('\nTotal size of items to remove from ' + first_folder + ' is ' +
+                     str(len(must_remove_from_a)) + '.')
+
+        print('Number of items to remove from ' + second_folder + ' is ' + str(len(must_remove_from_b)) + '.')
+        logFile.info('Total size of items to remove from ' + second_folder + ' is ' +
+                     str(len(must_remove_from_b)) + '.')
+
+        print('Size of items to remove from ' + first_folder + ' is ' +
+              str("{0:.0f}".format(size_to_remove_from_a / 1024**2)) + ' MB.')
+        logFile.info('Size of items to remove from ' + first_folder + ' is ' +
+                     str("{0:.0f}".format(size_to_remove_from_a / 1024 ** 2)) + ' MB.')
+
+        print('Size of items to remove from ' + second_folder + ' is ' +
+              str("{0:.0f}".format(size_to_remove_from_b / 1024 ** 2)) + ' MB.')
+        logFile.info('Size of items to remove from ' + second_folder + ' is ' +
+                     str("{0:.0f}".format(size_to_remove_from_b / 1024 ** 2)) + ' MB.')
 
     # TODO print and log total number and size of files to remove
 
