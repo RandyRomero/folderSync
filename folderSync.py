@@ -420,8 +420,8 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                  second_folder + ' with total size of ' +
                  str("{0:.0f}".format(size_of_items_in_b / 1024 ** 2)) + ' MB.')
 
-    print(str(len(same_path_and_name)) + ' file(s) that are common both folders.')
-    logFile.info(str(len(same_path_and_name)) + ' file(s) that are common both folders.')
+    print(str(len(same_path_and_name)) + ' file(s) that are common for both folders.')
+    logFile.info(str(len(same_path_and_name)) + ' file(s) that are common for both folders.')
     for path in same_path_and_name:
         logFile.info(path[1][0])
     logFile.info('\n')
@@ -445,7 +445,8 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
     logFile.info('\n')
 
     if level == 'low':
-        print(str(len(not_exist_in_b)) + ' item(s) from  ' + first_folder + ' don\'t exist in \'' + second_folder + '\'')
+        print(str(len(not_exist_in_b)) + ' item(s) from  ' + first_folder + ' don\'t exist in \'' +
+              second_folder + '\'')
         logFile.info(str(len(not_exist_in_b)) + ' item(s) from  ' + first_folder +
                      ' don\'t exist in \'' + second_folder + '\'')
         for path in not_exist_in_b:
@@ -655,7 +656,7 @@ def sync_files(compare_result, first_folder, second_folder):
     if len(not_exist_in_b) > 0:
         copy_items(not_exist_in_b, second_folder)
 
-    elif level == 'high':
+    if level == 'high':
         if len(remove_from_a) > 0:
             remove_items(remove_from_a)
 
@@ -723,6 +724,9 @@ if firstFolderSynced and secondFolderSynced:
     if compareResult[7] > 0:
         # call sync function if there is something to sync
         menu_before_sync()
+    else:
+        print('There is nothing to copy or remove.')
+        logFile.info('There is nothing to copy or remove.')
 
 elif firstFolderSynced or secondFolderSynced:
     print('Ooops')
