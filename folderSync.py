@@ -316,19 +316,21 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         if snap_a[key][1][3] in paths_of_snap_b:
             # if item with same path exists in both folders to be synced
 
-            if snap_a[key][0] == 'file':  # if item is file - compare them
+            if snap_a[key][0] == 'file':
+                # if item is file - compare them
                 num_files_in_a += 1
                 size_of_items_in_a += snap_a[key][2]
                 # count files in the first folder
                 same_path_and_name.append(snap_a[key])
                 corresponding_file_in_b = os.path.join(root_second_folder, snap_a[key][1][3])
-                # logConsole.debug('CORRESPONDING FILE IN B IS: ' + corresponding_file_in_b)
-                # put back root folder to path of file/folder in B
+                # merge root of second folder with path of file/folder from first folder
+                # to get a probability compare files
 
                 print('Comparing files... ' + snap_a[key][1][3])
                 if snap_a[key][2] != snap_b[corresponding_file_in_b][2]:
                     # if sizes of files are not equal, skip binary comparison
                     check_age_files()
+                    # check which file is newer
                 else:
                     if snap_a[key][2] > 1024**3:
                         print('It\'s gonna take some time, be patient.')
