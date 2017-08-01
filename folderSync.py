@@ -379,7 +379,7 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
             # if file in first folder has not been found in the second folder
             if level == 'high' and snap_a[key][1][3] in were_removed_from_b:
                 must_remove_from_a.append(snap_a[key][1][0])
-                if snap_a[key][0]:
+                if snap_a[key][0] == 'file':
                     size_to_remove_from_a += snap_a[key][2]
                 # if item was removed from B - add it to list of items
                 # which will be removed from A
@@ -457,99 +457,123 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         logFile.info(path[1][0])
     logFile.info('\n')
 
-    print(str(len(to_be_updated_from_a_to_b)) + ' item(s) has newer version in \'' + first_folder + '\'')
-    logFile.info(str(len(to_be_updated_from_a_to_b)) + ' item(s) has newer version in \'' + first_folder + '\'')
-    for path in to_be_updated_from_a_to_b:
-        logFile.info(path[1][0])
-    logFile.info('\n')
+    if len(to_be_updated_from_a_to_b) > 0:
+        print(str(len(to_be_updated_from_a_to_b)) + ' item(s) has newer version in \'' + first_folder + '\'')
+        logFile.info(str(len(to_be_updated_from_a_to_b)) + ' item(s) has newer version in \'' + first_folder + '\'')
+        for path in to_be_updated_from_a_to_b:
+            logFile.info(path[1][0])
+        logFile.info('\n')
 
-    print(str(len(to_be_updated_from_b_to_a)) + ' item(s) has newer version in ' + second_folder + '\'')
-    logFile.info(str(len(to_be_updated_from_b_to_a)) + ' item(s) has newer version in ' + second_folder + '\'')
-    for path in to_be_updated_from_b_to_a:
-        logFile.info(path[1][0])
-    logFile.info('\n')
+    if len(to_be_updated_from_b_to_a) > 0:
+        print(str(len(to_be_updated_from_b_to_a)) + ' item(s) has newer version in ' + second_folder + '\'')
+        logFile.info(str(len(to_be_updated_from_b_to_a)) + ' item(s) has newer version in ' + second_folder + '\'')
+        for path in to_be_updated_from_b_to_a:
+            logFile.info(path[1][0])
+        logFile.info('\n')
 
     if level == 'low':
-        print(str(len(not_exist_in_b)) + ' item(s) from  ' + first_folder + ' don\'t exist in \'' +
-              second_folder + '\'')
-        logFile.info(str(len(not_exist_in_b)) + ' item(s) from  ' + first_folder +
-                     ' don\'t exist in \'' + second_folder + '\'')
-        for path in not_exist_in_b:
-            logFile.info(path[1][0])
-        logFile.info('\n')
+        if len(not_exist_in_b) > 0:
+            print(str(len(not_exist_in_b)) + ' item(s) from  ' + first_folder + ' don\'t exist in \'' +
+                  second_folder + '\'')
+            logFile.info(str(len(not_exist_in_b)) + ' item(s) from  ' + first_folder +
+                         ' don\'t exist in \'' + second_folder + '\'')
+            for path in not_exist_in_b:
+                logFile.info(path[1][0])
+            logFile.info('\n')
 
-        print(str(len(not_exist_in_a)) + ' item(s) from  ' + second_folder + ' don\'t exist in \'' +
-              first_folder + '\'')
-        logFile.info(str(len(not_exist_in_a)) + ' item(s) from  ' +
-                     second_folder + ' don\'t exist in \'' + first_folder + '\'')
-        for path in not_exist_in_a:
-            logFile.info(path[1][0])
-        logFile.info('\n')
+        if len(not_exist_in_a) > 0:
+            print(str(len(not_exist_in_a)) + ' item(s) from  ' + second_folder + ' don\'t exist in \'' +
+                  first_folder + '\'')
+            logFile.info(str(len(not_exist_in_a)) + ' item(s) from  ' +
+                         second_folder + ' don\'t exist in \'' + first_folder + '\'')
+            for path in not_exist_in_a:
+                logFile.info(path[1][0])
+            logFile.info('\n')
 
     if level == 'high':
-        print(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder + ' since ' +
-              store_date_a + '.')
-        logFile.info(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder + ' since ' +
-                     store_date_a + '.')
+        if len(were_removed_from_a) > 0:
+            print(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder + ' since ' +
+                  store_date_a + '.')
+            logFile.info(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder + ' since ' +
+                         store_date_a + '.')
+            for item in were_removed_from_a:
+                logFile.info(item)
+            logFile.info('\n')
 
-        print(str(len(were_removed_from_b)) + ' item(s) have been removed from \'' + second_folder + ' since ' +
-              store_date_b + '.')
-        logFile.info(str(len(were_removed_from_b)) + ' item(s) have been removed from \'' + second_folder + ' since ' +
-                     store_date_b + '.')
+        if len(were_removed_from_b) > 0:
+            print(str(len(were_removed_from_b)) + ' item(s) have been removed from \'' + second_folder + ' since ' +
+                  store_date_b + '.')
+            logFile.info(str(len(were_removed_from_b)) + ' item(s) have been removed from \'' + second_folder + ' since ' +
+                         store_date_b + '.')
+            for item in were_removed_from_b:
+                logFile.info(item)
+            logFile.info('\n')
 
-        print(str(len(not_exist_in_b)) + ' new item(s) in ' + first_folder)
-        logFile.info(str(len(not_exist_in_b)) + ' new item(s) in ' + first_folder + '\n')
+        if len(not_exist_in_b) > 0:
+            print(str(len(not_exist_in_b)) + ' new item(s) in ' + first_folder)
+            logFile.info(str(len(not_exist_in_b)) + ' new item(s) in ' + first_folder + '\n')
+            for item in not_exist_in_b:
+                logFile.info(item)
+            logFile.info('\n')
 
-        print(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder)
-        logFile.info(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder)
+        if len(not_exist_in_a) > 0:
+            print(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder)
+            logFile.info(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder)
+            for item in not_exist_in_a:
+                logFile.info(item)
+            logFile.info('\n')
 
-        print('There are ' + str(len(skipped_files)) + ' items that you should check manually.')
-        logFile.info('There are ' + str(len(skipped_files)) + ' items that you should check manually\n.')
         if len(skipped_files) > 0:
-            print('These are: ')
-            logFile.warning('These are: ')
-            for file in skipped_files:
-                print('- ' + file)
-                logFile.warning('- ' + file)
+            print('There are ' + str(len(skipped_files)) + ' items that you should check manually.')
+            logFile.info('There are ' + str(len(skipped_files)) + ' items that you should check manually\n.')
+            if len(skipped_files) > 0:
+                print('These are: ')
+                logFile.warning('These are: ')
+                for file in skipped_files:
+                    print('- ' + file)
+                    logFile.warning('- ' + file)
 
-    print('Number of item(s) to transfer from ' + first_folder + ' to ' + second_folder + ' is ' +
-          str(number_to_transfer_from_a_to_b) + '.')
-    logFile.info('Number of item(s) to transfer from ' + first_folder + ' to ' + second_folder + ' is ' +
-                 str(number_to_transfer_from_a_to_b) + '.\n')
+    if number_to_transfer_from_a_to_b > 0:
+        print('Number of item(s) to transfer from ' + first_folder + ' to ' + second_folder + ' is ' +
+              str(number_to_transfer_from_a_to_b) + '.')
+        logFile.info('Number of item(s) to transfer from ' + first_folder + ' to ' + second_folder + ' is ' +
+                     str(number_to_transfer_from_a_to_b) + '.\n')
 
-    print('Number item(s) to transfer from ' + second_folder + ' to ' + first_folder + ' is ' +
-          str(number_to_transfer_from_b_to_a) + '.')
-    logFile.info('Number item(s) to transfer from ' + second_folder + ' to ' + first_folder + ' is ' +
-                 str(number_to_transfer_from_b_to_a) + '.\n')
+        print('Total size of file(s) to transfer from ' + first_folder + '  to ' + second_folder + ' is ' +
+              str("{0:.0f}".format(size_from_a_to_b / 1024 / 1024)) + ' MB.')
+        logFile.info('Total size of file(s) to transfer from ' + first_folder + '  to ' + second_folder + ' is ' +
+                     str("{0:.0f}".format(size_from_a_to_b / 1024 / 1024)) + ' MB.')
 
-    print('Total size of file(s) to transfer from ' + first_folder + '  to ' + second_folder + ' is ' +
-          str("{0:.0f}".format(size_from_a_to_b / 1024 / 1024)) + ' MB.')
-    logFile.info('Total size of file(s) to transfer from ' + first_folder + '  to ' + second_folder + ' is ' +
-                 str("{0:.0f}".format(size_from_a_to_b / 1024 / 1024)) + ' MB.')
+    if number_to_transfer_from_b_to_a > 0:
+        print('Number item(s) to transfer from ' + second_folder + ' to ' + first_folder + ' is ' +
+              str(number_to_transfer_from_b_to_a) + '.')
+        logFile.info('Number item(s) to transfer from ' + second_folder + ' to ' + first_folder + ' is ' +
+                     str(number_to_transfer_from_b_to_a) + '.\n')
 
-    print('Total size of file(s) to transfer from ' + second_folder + '  to ' + first_folder + ' is ' +
-          str("{0:.0f}".format(size_from_b_to_a / 1024 / 1024)) + ' MB.')
-    logFile.info('Total size of file(s) to transfer from ' + second_folder + '  to ' + first_folder + ' is ' +
-                 str("{0:.0f}".format(size_from_b_to_a / 1024 / 1024)) + ' MB.')
+        print('Total size of file(s) to transfer from ' + second_folder + '  to ' + first_folder + ' is ' +
+              str("{0:.0f}".format(size_from_b_to_a / 1024 / 1024)) + ' MB.')
+        logFile.info('Total size of file(s) to transfer from ' + second_folder + '  to ' + first_folder + ' is ' +
+                     str("{0:.0f}".format(size_from_b_to_a / 1024 / 1024)) + ' MB.')
 
     if level == 'high':
-        print('\nNumber of item(s) to remove from ' + first_folder + ' is ' + str(len(must_remove_from_a)) + '.')
-        logFile.info('\nTotal size of item(s) to remove from ' + first_folder + ' is ' +
-                     str(len(must_remove_from_a)) + '.')
+        if len(must_remove_from_a) > 0:
+            print('\nNumber of item(s) to remove from ' + first_folder + ' is ' + str(len(must_remove_from_a)) + '.')
+            logFile.info('\nTotal size of item(s) to remove from ' + first_folder + ' is ' +
+                         str(len(must_remove_from_a)) + '.')
+            print('Size of item(s) to remove from ' + first_folder + ' is ' +
+                  str("{0:.0f}".format(size_to_remove_from_a / 1024 ** 2)) + ' MB.')
+            logFile.info('Size of item(s) to remove from ' + first_folder + ' is ' +
+                         str("{0:.0f}".format(size_to_remove_from_a / 1024 ** 2)) + ' MB.')
 
-        print('Number of item(s) to remove from ' + second_folder + ' is ' + str(len(must_remove_from_b)) + '.')
-        logFile.info('Total size of item(s) to remove from ' + second_folder + ' is ' +
-                     str(len(must_remove_from_b)) + '.')
+        if len(must_remove_from_b) > 0:
+            print('Number of item(s) to remove from ' + second_folder + ' is ' + str(len(must_remove_from_b)) + '.')
+            logFile.info('Total size of item(s) to remove from ' + second_folder + ' is ' +
+                         str(len(must_remove_from_b)) + '.')
 
-        print('Size of item(s) to remove from ' + first_folder + ' is ' +
-              str("{0:.0f}".format(size_to_remove_from_a / 1024**2)) + ' MB.')
-        logFile.info('Size of item(s) to remove from ' + first_folder + ' is ' +
-                     str("{0:.0f}".format(size_to_remove_from_a / 1024 ** 2)) + ' MB.')
-
-        print('Size of item(s) to remove from ' + second_folder + ' is ' +
-              str("{0:.0f}".format(size_to_remove_from_b / 1024 ** 2)) + ' MB.')
-        logFile.info('Size of item(s) to remove from ' + second_folder + ' is ' +
-                     str("{0:.0f}".format(size_to_remove_from_b / 1024 ** 2)) + ' MB.')
+            print('Size of item(s) to remove from ' + second_folder + ' is ' +
+                  str("{0:.0f}".format(size_to_remove_from_b / 1024 ** 2)) + ' MB.')
+            logFile.info('Size of item(s) to remove from ' + second_folder + ' is ' +
+                         str("{0:.0f}".format(size_to_remove_from_b / 1024 ** 2)) + ' MB.')
 
     print('--- {0:.3f} --- seconds\n'.format(time.time() - start_time))
     logFile.info('--- {0:.3f} --- seconds'.format(time.time() - start_time))
