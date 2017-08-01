@@ -727,17 +727,21 @@ def sync_files(compare_result, first_folder, second_folder):
         if len(remove_from_b) > 0:
             remove_items(remove_from_b)
 
-    print('\n' + str(were_created) + ' folders were created.')
-    logFile.info('\n' + str(were_created) + ' folder were created.')
+    if were_created > 0:
+        print('\n' + str(were_created) + ' folders were created.')
+        logFile.info('\n' + str(were_created) + ' folder were created.')
 
-    print(str(were_copied) + ' file(s) were copied.')
-    logFile.info(str(were_copied) + ' files were copied.')
+    if were_copied > 0:
+        print(str(were_copied) + ' file(s) were copied.')
+        logFile.info(str(were_copied) + ' files were copied.')
 
-    print(str(were_updated) + ' file(s) were updated.')
-    logFile.info(str(were_updated) + ' files were updated.')
+    if were_updated > 0:
+        print(str(were_updated) + ' file(s) were updated.')
+        logFile.info(str(were_updated) + ' files were updated.')
 
-    print(str(were_removed) + ' file(s) were removed.')
-    logFile.info(str(were_removed) + ' file(s) were removed.')
+    if were_removed > 0:
+        print(str(were_removed) + ' file(s) were removed.')
+        logFile.info(str(were_removed) + ' file(s) were removed.')
 
     print('Total size of files were copied or updated is {0:.2f} MB.'.format(total_size_copied_updated / 1024**2))
     logFile.info('Total size of files were copied or updated is {0:.2f} MB.'
