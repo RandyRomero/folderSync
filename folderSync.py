@@ -378,7 +378,7 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         else:
             # if file in first folder has not been found in the second folder
             if level == 'high' and snap_a[key][1][3] in were_removed_from_b:
-                must_remove_from_a.append(snap_a[key][1][0])
+                must_remove_from_a.append(snap_a[key])
                 if snap_a[key][0] == 'file':
                     size_to_remove_from_a += snap_a[key][2]
                 # if item was removed from B - add it to list of items
@@ -405,7 +405,7 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
             if level == 'high' and snap_b[key][1][3] in were_removed_from_a:
                 # if item was removed from A - add it to list of items
                 # which will be removed from B
-                must_remove_from_b.append(snap_b[key][1][0])
+                must_remove_from_b.append(snap_b[key])
                 if snap_b[key][0] == 'file':
                     size_to_remove_from_b += snap_b[key][2]
             else:
@@ -494,8 +494,8 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         if len(were_removed_from_a) > 0:
             print(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder + ' since ' +
                   store_date_a + '.')
-            logFile.info(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder + ' since ' +
-                         store_date_a + '.')
+            logFile.info(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder +
+                         ' since ' + store_date_a + '.')
             for item in were_removed_from_a:
                 logFile.info(item)
             logFile.info('\n')
@@ -503,8 +503,8 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         if len(were_removed_from_b) > 0:
             print(str(len(were_removed_from_b)) + ' item(s) have been removed from \'' + second_folder + ' since ' +
                   store_date_b + '.')
-            logFile.info(str(len(were_removed_from_b)) + ' item(s) have been removed from \'' + second_folder + ' since ' +
-                         store_date_b + '.')
+            logFile.info(str(len(were_removed_from_b)) + ' item(s) have been removed from \'' + second_folder +
+                         ' since ' + store_date_b + '.')
             for item in were_removed_from_b:
                 logFile.info(item)
             logFile.info('\n')
@@ -619,8 +619,9 @@ def sync_files(compare_result, first_folder, second_folder):
     not_exist_in_a, not_exist_in_b, to_be_updated_from_b_to_a, to_be_updated_from_a_to_b, \
         remove_from_a, remove_from_b, level, number_files_to_handle = compare_result
 
+    total_size_copied_updated = 0
+    total_size_removed = 0
     were_copied = 0
-    total_size = 0
     were_created = 0
     were_updated = 0
     were_removed = 0
@@ -628,14 +629,16 @@ def sync_files(compare_result, first_folder, second_folder):
     logFile.info('Start syncing files...')
     print('Start syncing files...')
 
-    def remove_items(files_to_remove):
+    def remove_items(items_to_remove):
 
         nonlocal were_removed
+        nonlocal total_size_removed
 
         print('Removing files...')
         logFile.info('Removing files...')
 
-        for full_path in files_to_remove:
+        for item in range(len(items_to_remove)):
+            full_path = items_to_remove[item][1][0]
             if os.path.exists(full_path):
                 send2trash.send2trash(full_path)
                 print(full_path + ' were removed')
@@ -644,14 +647,17 @@ def sync_files(compare_result, first_folder, second_folder):
             else:
                 # item was removed with its folder before
                 were_removed += 1
-                continue
+
+            if items_to_remove[item][0] == 'file':
+                # count size of removed files
+                total_size_removed += items_to_remove[item][2]
 
     def copy_items(not_exist_items, path_to_root):
         # Copy files that don't exist in one of folders
 
         nonlocal were_copied
         nonlocal were_created
-        nonlocal total_size
+        nonlocal total_size_copied_updated
         # in order to use a variable from nearest outer scope
 
         for file in not_exist_items:
@@ -676,14 +682,14 @@ def sync_files(compare_result, first_folder, second_folder):
                     shutil.copy2(full_path_item_in_this_folder, full_path_item_that_not_exits_yet)
                     # copy file
                     were_copied += 1
-                    total_size += file[2]
+                    total_size_copied_updated += file[2]
                     print('- ' + os.path.basename(full_path_item_that_not_exits_yet + ' was copied.'))
                     logFile.info('- ' + os.path.basename(full_path_item_that_not_exits_yet + ' was copied.'))
 
     def update_files(to_be_updated):
         # Update file by deleting old one and copying new one instead of it
 
-        nonlocal total_size
+        nonlocal total_size_copied_updated
         nonlocal were_updated
 
         for array in to_be_updated:
@@ -693,7 +699,7 @@ def sync_files(compare_result, first_folder, second_folder):
                 shutil.copy2(array[0], array[1])
                 print('- ' + array[1] + ' was updated.')
                 logFile.info('- ' + array[1] + ' was updated.')
-                total_size += array[2]
+                total_size_copied_updated += array[2]
                 were_updated += 1
             elif not os.path.exists(array[0]):
                 print(array[0] + ' hasn\'t been found! Can\'t handle it.')
@@ -733,8 +739,12 @@ def sync_files(compare_result, first_folder, second_folder):
     print(str(were_removed) + ' file(s) were removed.')
     logFile.info(str(were_removed) + ' file(s) were removed.')
 
-    print('Total size of files were copied or updated is {0:.2f} MB.'.format(total_size / 1024 / 1024))
-    logFile.info('Total size of files were copied or updated is {0:.2f} MB.'.format(total_size / 1024 / 1024))
+    print('Total size of files were copied or updated is {0:.2f} MB.'.format(total_size_copied_updated / 1024**2))
+    logFile.info('Total size of files were copied or updated is {0:.2f} MB.'
+                 .format(total_size_copied_updated / 1024**2))
+
+    print('Total size of files were removed in {0:.2f} MB'.format(total_size_removed / 1024**2))
+    logFile.info('Total size of files were removed in {0:.2f} MB'.format(total_size_removed / 1024**2))
 
     print('--- {0:.3f} seconds ---\n'.format(time.time() - start_time))
     logFile.info('--- {0:.3f} seconds ---\n'.format(time.time() - start_time))
