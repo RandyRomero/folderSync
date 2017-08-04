@@ -14,10 +14,11 @@ import send2trash
 import shelve
 import sys
 import time
-# import platform
 
 firstFolder = ''
 secondFolder = ''
+remove_from_a_next_time = []
+remove_from_b_next_time = []
 
 
 def set_loggers():
@@ -134,7 +135,7 @@ def get_snapshot(path_to_root_folder, root_folder):
     for root, folders, files in os.walk(path_to_root_folder):
         folders[:] = [x for x in folders if not x == '.folderSyncSnapshot']
         files = [x for x in files if not x.startswith('~$')]
-        # only add to list folders that not '.folderSyncSnapshot'
+        # only add to list folders that not '.folderSyncSnapshot' and files that don't start with '~$'
 
         for folder in folders:
 
@@ -187,11 +188,31 @@ def get_changes_between_states_of_folders(path_to_folder, root_of_path):
     store_date = shel_file['date']
     # load previous state of folder from shelve db
 
+    if shel_file['to_remove_from_a'][0] == root_of_path:
+        # figure out which list of files that were not removed last time
+        # program should load this time due to folder name
+        were_not_removed_last_time = shel_file['to_remove_from_a']
+    else:
+        if shel_file['to_remove_from_b'][0] == root_of_path:
+            were_not_removed_last_time = shel_file['to_remove_from_b']
+        else:
+            logConsole.error('ERROR: Can not load list of files that program could not remove last time.')
+            logFile.error('ERROR: Can not load list of files that program could not remove last time')
+            sys.exit()
+
     items_with_changed_mtime = []
     items_from_prev_snapshot = []
     items_from_current_snapshot = []
     items_were_removed = []
     new_items = []
+
+    if len(were_not_removed_last_time) > 1:
+        print('There are ' + str(len(were_not_removed_last_time) - 1) + ' file(s) that were not removed last time')
+        logFile.info('There are ' + str(len(were_not_removed_last_time) - 1) +
+                     ' file(s) that were not removed last time')
+        for i in range(1, len(were_not_removed_last_time)):
+            items_were_removed.append(were_not_removed_last_time[i][1][3])
+            # add files that were not removed last time
 
     for key in current_folder_snapshot.keys():
         items_from_current_snapshot.append(key)
@@ -218,7 +239,7 @@ def get_changes_between_states_of_folders(path_to_folder, root_of_path):
                     logFile.info('Modification time of ' + current_folder_snapshot[key][1][0] + ' has changed.')
 
     for path in items_from_current_snapshot:
-        if path not in items_from_prev_snapshot:
+        if path not in items_from_prev_snapshot and path not in items_were_removed:
             logFile.info(path + ' IS NEW ITEM')
             new_items.append(path)
 
@@ -403,6 +424,7 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
             num_folders_in_b += 1
 
         if not snap_b[key][1][3] in paths_of_snap_a:
+            # if file was not found in first folder
             if level == 'high' and snap_b[key][1][3] in were_removed_from_a:
                 # if item was removed from A - add it to list of items
                 # which will be removed from B
@@ -493,19 +515,19 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
 
     if level == 'high':
         if len(were_removed_from_a) > 0:
-            print(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder + ' since ' +
+            print(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder + '\' since ' +
                   store_date_a + '.')
             logFile.info(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder +
-                         ' since ' + store_date_a + '.')
+                         '\' since ' + store_date_a + '.')
             for item in were_removed_from_a:
                 logFile.info(item)
             logFile.info('\n')
 
         if len(were_removed_from_b) > 0:
-            print(str(len(were_removed_from_b)) + ' item(s) have been removed from \'' + second_folder + ' since ' +
+            print(str(len(were_removed_from_b)) + ' item(s) have been removed from \'' + second_folder + '\' since ' +
                   store_date_b + '.')
             logFile.info(str(len(were_removed_from_b)) + ' item(s) have been removed from \'' + second_folder +
-                         ' since ' + store_date_b + '.')
+                         '\' since ' + store_date_b + '.')
             for item in were_removed_from_b:
                 logFile.info(item)
             logFile.info('\n')
@@ -606,8 +628,9 @@ def store_snapshot_before_exit(folder_to_take_snapshot, root_folder, folder_sync
     shel_file['path'] = folder_to_take_snapshot
     shel_file['snapshot'] = snapshot
     shel_file['date'] = store_time
+    shel_file['to_remove_from_a'] = remove_from_a_next_time
+    shel_file['to_remove_from_b'] = remove_from_b_next_time
 
-    # print('Snapshot of ' + root_folder + ' was stored in ' + folder_to_take_snapshot + ' at ' + store_time)
     logFile.info('Snapshot of ' + root_folder + ' was stored in ' + folder_to_take_snapshot + ' at ' + store_time)
 
     shel_file.close()
@@ -639,10 +662,10 @@ def sync_files(compare_result, first_folder, second_folder):
             try:
                 send2trash.send2trash(file_to_delete)
             except OSError:
-                print(file_to_delete + ' have been opened in another app. Close all apps that can use this file and '
-                                       'start sync over.')
-                logFile.warning(file_to_delete + ' have been opened in another app. Close all apps that can use '
-                                                 'this file and start sync over.')
+                print(file_to_delete + ' has been opened in another app. Close all apps that can use this file and '
+                                       'try again.')
+                logFile.warning(file_to_delete + ' has been opened in another app. Close all apps that can use '
+                                                 'this file and try again.')
                 user_decision = input('Try again? y/n: ').lower()
                 if user_decision == 'n':
                     return False
@@ -656,7 +679,7 @@ def sync_files(compare_result, first_folder, second_folder):
                     continue
             return True
 
-    def remove_items(items_to_remove):
+    def remove_items(items_to_remove, folder):
         # function that recursively removes files from list
 
         nonlocal were_removed
@@ -676,8 +699,10 @@ def sync_files(compare_result, first_folder, second_folder):
                 else:
                     print(full_path + ' was not removed.')
                     logFile.warning(full_path + ' was not removed.')
-                    # TODO handle files that were not removed somehow to prevent script to think that
-                    # it is a new one while next sync
+                    if folder == 'first':
+                        remove_from_b_next_time.append(items_to_remove[item])
+                    elif folder == 'second':
+                        remove_from_a_next_time.append(items_to_remove[item])
                     remove_state = False
                     continue
             else:
@@ -738,10 +763,9 @@ def sync_files(compare_result, first_folder, second_folder):
                     total_size_copied_updated += array[2]
                     were_updated += 1
                 else:
-                    print(array[1] + ' was not removed.')
-                    logFile.warning(array[1] + ' was not removed.')
-                    # TODO handle files that were not removed somehow to prevent script to think that
-                    # it is a new one while next sync
+                    print(array[1] + ' was not updated.')
+                    logFile.warning(array[1] + ' was not updated.')
+                    # Script will try to updated it next time, there is nothing to be worried about
                     continue
 
             elif not os.path.exists(array[0]):
@@ -765,10 +789,10 @@ def sync_files(compare_result, first_folder, second_folder):
 
     if level == 'high':
         if len(remove_from_a) > 0:
-            remove_items(remove_from_a)
+            remove_items(remove_from_a, 'first')
 
         if len(remove_from_b) > 0:
-            remove_items(remove_from_b)
+            remove_items(remove_from_b, 'second')
 
     if were_created > 0:
         print('\n' + str(were_created) + ' folders were created.')
@@ -815,9 +839,11 @@ logConsole.debug(secondFolder + ' Has been synced before? ' + str(secondFolderSy
 rootFirstFolder = re.search(r'(\w+$)', firstFolder).group(0)
 rootSecondFolder = re.search(r'(\w+$)', secondFolder).group(0)
 # get names of root folders to be compared
-# snapshotFirstFolder = getSnapshot(firstFolder, rootFirstFolder)
-# snapshotSecondFolder = getSnapshot(secondFolder, rootSecondFolder)
-# get all paths of all files and folders with properties from folders to be compared
+
+remove_from_a_next_time.append(rootFirstFolder)
+remove_from_b_next_time.append(rootSecondFolder)
+# add root of folders as first elements in these list in case if script would not be able to remove file;
+# to distinguish which not removed files belongs to which folder
 
 
 def menu_before_sync():
