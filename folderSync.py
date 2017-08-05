@@ -14,6 +14,7 @@ import send2trash
 import shelve
 import sys
 import time
+import traceback
 
 firstFolder = ''
 secondFolder = ''
@@ -165,7 +166,7 @@ def get_snapshot(path_to_root_folder, root_folder):
     logFile.info('There are ' + str(folders_number) + ' folders and ' +
                  str(files_number) + ' files in ' + path_to_root_folder)
     logFile.info('Total size of ' + path_to_root_folder + ' is ' +
-                 str("{0:.0f}".format(total_size / 1024 / 1024)) + ' MB.\n')
+                 str("{0:.2f}".format(total_size / 1024**2)) + ' MB.\n')
     logFile.info('--- {0:.3f} seconds ---\n'.format(time.time() - start_time))
 
     return current_snapshot
@@ -257,7 +258,7 @@ def get_changes_between_states_of_folders(path_to_folder, root_of_path):
     # 3. If size is equal, but mtime is different, check byte-by-byte
 
 
-def snapshot_comparison(first_folder, second_folder, root_first_folder, root_second_folder, level):
+def snapshot_comparison(first_folder, second_folder, root_first_folder, root_second_folder):
     # compare files in binary mode if folders haven't been synced before
 
     start_time = time.time()
@@ -284,12 +285,12 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
     size_to_remove_from_a = 0
     size_to_remove_from_b = 0
     skipped_files = []
-    snap_a = {}
-    snap_b = {}
     store_date_a = 0
     store_date_b = 0
     to_be_updated_from_a_to_b = []
     to_be_updated_from_b_to_a = []
+    updated_items_a = []
+    updated_items_b = []
     were_removed_from_a = []
     were_removed_from_b = []
 
@@ -300,15 +301,19 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
     Below it looks like same_path_and_name.append([key, snap_a[key][1][0]])
     '''
 
-    if level == 'low':
-        snap_a = get_snapshot(first_folder, root_first_folder)
-        snap_b = get_snapshot(second_folder, root_second_folder)
-    elif level == 'high':
+    if firstFolderSynced:
         were_removed_from_a, new_in_a, updated_items_a, snap_a, store_date_a = \
             get_changes_between_states_of_folders(first_folder, root_first_folder)
+    else:
+        snap_a = get_snapshot(first_folder, root_first_folder)
+
+    if secondFolderSynced:
         were_removed_from_b, new_in_b, updated_items_b, snap_b, store_date_b = \
             get_changes_between_states_of_folders(second_folder, root_second_folder)
+    else:
+        snap_b = get_snapshot(second_folder, root_second_folder)
 
+    if bothSynced:
         both_updated = [item for item in updated_items_a if item in updated_items_b]
         # check if the same file were changed in both folder (which mean you can't
         # decide automatically which one to remove and which one to update)
@@ -331,7 +336,7 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         nonlocal both_updated
         nonlocal skipped_files
 
-        if level == 'high' and len(both_updated) > 0 and file_from_a[1][3] in both_updated:
+        if bothSynced and len(both_updated) > 0 and file_from_a[1][3] in both_updated:
             # do not update file if it has been updated in both folders since last time
             print(file_from_a[1][3] + ' has changed in both folders, so you need to choose right version manually. '
                                       'Program will not manage it.')
@@ -399,12 +404,11 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
 
         else:
             # if file in first folder has not been found in the second folder
-            if level == 'high' and snap_a[key][1][3] in were_removed_from_b:
+            if snap_a[key][1][3] in were_removed_from_b:
                 must_remove_from_a.append(snap_a[key])
                 if snap_a[key][0] == 'file':
                     size_to_remove_from_a += snap_a[key][2]
-                # if item was removed from B - add it to list of items
-                # which will be removed from A
+                # if item was removed from B - add it to list of items which will be removed from A
                 continue
             else:
                 not_exist_in_b.append(snap_a[key])
@@ -425,7 +429,7 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
 
         if not snap_b[key][1][3] in paths_of_snap_a:
             # if file was not found in first folder
-            if level == 'high' and snap_b[key][1][3] in were_removed_from_a:
+            if snap_b[key][1][3] in were_removed_from_a:
                 # if item was removed from A - add it to list of items
                 # which will be removed from B
                 must_remove_from_b.append(snap_b[key])
@@ -457,16 +461,16 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
     print('')
     print('###########################')
     print('There are ' + str(num_folders_in_a) + ' folders and ' + str(num_files_in_a) + ' files in ' + first_folder +
-          ' with total size of ' + str("{0:.0f}".format(size_of_items_in_a / 1024**2)) + ' MB.')
+          ' with total size of ' + str("{0:.2f}".format(size_of_items_in_a / 1024**2)) + ' MB.')
     logFile.info('There are ' + str(num_folders_in_a) + ' folders and ' + str(num_files_in_a) + ' files in ' +
                  first_folder + ' with total size of ' +
-                 str("{0:.0f}".format(size_of_items_in_a / 1024 ** 2)) + ' MB.')
+                 str("{0:.2f}".format(size_of_items_in_a / 1024 ** 2)) + ' MB.')
 
     print('There are ' + str(num_folders_in_b) + ' folders and ' + str(num_files_in_b) + ' files in ' + second_folder +
-          ' with total size of ' + str("{0:.0f}".format(size_of_items_in_b / 1024 ** 2)) + ' MB.')
+          ' with total size of ' + str("{0:.2f}".format(size_of_items_in_b / 1024 ** 2)) + ' MB.')
     logFile.info('There are ' + str(num_folders_in_b) + ' folders and ' + str(num_files_in_b) + ' files in ' +
                  second_folder + ' with total size of ' +
-                 str("{0:.0f}".format(size_of_items_in_b / 1024 ** 2)) + ' MB.')
+                 str("{0:.2f}".format(size_of_items_in_b / 1024 ** 2)) + ' MB.')
 
     print(str(len(same_path_and_name)) + ' file(s) that are common for both folders.')
     logFile.info(str(len(same_path_and_name)) + ' file(s) that are common for both folders.')
@@ -480,21 +484,14 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         logFile.info(path[1][0])
     logFile.info('\n')
 
-    if len(to_be_updated_from_a_to_b) > 0:
-        print(str(len(to_be_updated_from_a_to_b)) + ' item(s) has newer version in \'' + first_folder + '\'')
-        logFile.info(str(len(to_be_updated_from_a_to_b)) + ' item(s) has newer version in \'' + first_folder + '\'')
-        for path in to_be_updated_from_a_to_b:
-            logFile.info(path[1][0])
-        logFile.info('\n')
-
-    if len(to_be_updated_from_b_to_a) > 0:
-        print(str(len(to_be_updated_from_b_to_a)) + ' item(s) has newer version in ' + second_folder + '\'')
-        logFile.info(str(len(to_be_updated_from_b_to_a)) + ' item(s) has newer version in ' + second_folder + '\'')
-        for path in to_be_updated_from_b_to_a:
-            logFile.info(path[1][0])
-        logFile.info('\n')
-
-    if level == 'low':
+    if firstFolderSynced:
+        if len(not_exist_in_b) > 0:
+            print(str(len(not_exist_in_b)) + ' new item(s) in ' + first_folder)
+            logFile.info(str(len(not_exist_in_b)) + ' new item(s) in ' + first_folder + '\n')
+            for item in not_exist_in_b:
+                logFile.info(item)
+            logFile.info('\n')
+    else:
         if len(not_exist_in_b) > 0:
             print(str(len(not_exist_in_b)) + ' item(s) from  ' + first_folder + ' don\'t exist in \'' +
                   second_folder + '\'')
@@ -504,6 +501,14 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                 logFile.info(path[1][0])
             logFile.info('\n')
 
+    if secondFolderSynced:
+        if len(not_exist_in_a) > 0:
+            print(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder)
+            logFile.info(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder)
+            for item in not_exist_in_a:
+                logFile.info(item)
+            logFile.info('\n')
+    else:
         if len(not_exist_in_a) > 0:
             print(str(len(not_exist_in_a)) + ' item(s) from  ' + second_folder + ' don\'t exist in \'' +
                   first_folder + '\'')
@@ -513,48 +518,47 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                 logFile.info(path[1][0])
             logFile.info('\n')
 
-    if level == 'high':
-        if len(were_removed_from_a) > 0:
-            print(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder + '\' since ' +
-                  store_date_a + '.')
-            logFile.info(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder +
-                         '\' since ' + store_date_a + '.')
-            for item in were_removed_from_a:
-                logFile.info(item)
-            logFile.info('\n')
+    if len(to_be_updated_from_a_to_b) > 0:
+        print(str(len(to_be_updated_from_a_to_b)) + ' item(s) has newer version in \'' + first_folder + '\'')
+        logFile.info(str(len(to_be_updated_from_a_to_b)) + ' item(s) has newer version in \'' + first_folder + '\'')
+        for path in to_be_updated_from_a_to_b:
+            logFile.info(path[0])
+        logFile.info('\n')
 
-        if len(were_removed_from_b) > 0:
-            print(str(len(were_removed_from_b)) + ' item(s) have been removed from \'' + second_folder + '\' since ' +
-                  store_date_b + '.')
-            logFile.info(str(len(were_removed_from_b)) + ' item(s) have been removed from \'' + second_folder +
-                         '\' since ' + store_date_b + '.')
-            for item in were_removed_from_b:
-                logFile.info(item)
-            logFile.info('\n')
+    if len(to_be_updated_from_b_to_a) > 0:
+        print(str(len(to_be_updated_from_b_to_a)) + ' item(s) has newer version in ' + second_folder + '\'')
+        logFile.info(str(len(to_be_updated_from_b_to_a)) + ' item(s) has newer version in ' + second_folder + '\'')
+        for path in to_be_updated_from_b_to_a:
+            logFile.info(path[0])
+        logFile.info('\n')
 
-        if len(not_exist_in_b) > 0:
-            print(str(len(not_exist_in_b)) + ' new item(s) in ' + first_folder)
-            logFile.info(str(len(not_exist_in_b)) + ' new item(s) in ' + first_folder + '\n')
-            for item in not_exist_in_b:
-                logFile.info(item)
-            logFile.info('\n')
+    if len(were_removed_from_a) > 0:
+        print(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder + '\' since ' +
+              store_date_a + '.')
+        logFile.info(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder +
+                     '\' since ' + store_date_a + '.')
+        for item in were_removed_from_a:
+            logFile.info(item)
+        logFile.info('\n')
 
-        if len(not_exist_in_a) > 0:
-            print(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder)
-            logFile.info(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder)
-            for item in not_exist_in_a:
-                logFile.info(item)
-            logFile.info('\n')
+    if len(were_removed_from_b) > 0:
+        print(str(len(were_removed_from_b)) + ' item(s) have been removed from \'' + second_folder + '\' since ' +
+              store_date_b + '.')
+        logFile.info(str(len(were_removed_from_b)) + ' item(s) have been removed from \'' + second_folder +
+                     '\' since ' + store_date_b + '.')
+        for item in were_removed_from_b:
+            logFile.info(item)
+        logFile.info('\n')
 
+    if len(skipped_files) > 0:
+        print('There are ' + str(len(skipped_files)) + ' items that you should check manually.')
+        logFile.info('There are ' + str(len(skipped_files)) + ' items that you should check manually\n.')
         if len(skipped_files) > 0:
-            print('There are ' + str(len(skipped_files)) + ' items that you should check manually.')
-            logFile.info('There are ' + str(len(skipped_files)) + ' items that you should check manually\n.')
-            if len(skipped_files) > 0:
-                print('These are: ')
-                logFile.warning('These are: ')
-                for file in skipped_files:
-                    print('- ' + file)
-                    logFile.warning('- ' + file)
+            print('These are: ')
+            logFile.warning('These are: ')
+            for file in skipped_files:
+                print('- ' + file)
+                logFile.warning('- ' + file)
 
     if number_to_transfer_from_a_to_b > 0:
         print('Number of item(s) to transfer from ' + first_folder + ' to ' + second_folder + ' is ' +
@@ -563,9 +567,9 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                      str(number_to_transfer_from_a_to_b) + '.\n')
 
         print('Total size of file(s) to transfer from ' + first_folder + '  to ' + second_folder + ' is ' +
-              str("{0:.0f}".format(size_from_a_to_b / 1024 / 1024)) + ' MB.')
+              str("{0:.2f}".format(size_from_a_to_b / 1024**2)) + ' MB.')
         logFile.info('Total size of file(s) to transfer from ' + first_folder + '  to ' + second_folder + ' is ' +
-                     str("{0:.0f}".format(size_from_a_to_b / 1024 / 1024)) + ' MB.')
+                     str("{0:.2f}".format(size_from_a_to_b / 1024**2)) + ' MB.')
 
     if number_to_transfer_from_b_to_a > 0:
         print('Number item(s) to transfer from ' + second_folder + ' to ' + first_folder + ' is ' +
@@ -574,39 +578,38 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                      str(number_to_transfer_from_b_to_a) + '.\n')
 
         print('Total size of file(s) to transfer from ' + second_folder + '  to ' + first_folder + ' is ' +
-              str("{0:.0f}".format(size_from_b_to_a / 1024 / 1024)) + ' MB.')
+              str("{0:.2f}".format(size_from_b_to_a / 1024**2)) + ' MB.')
         logFile.info('Total size of file(s) to transfer from ' + second_folder + '  to ' + first_folder + ' is ' +
-                     str("{0:.0f}".format(size_from_b_to_a / 1024 / 1024)) + ' MB.')
+                     str("{0:.2f}".format(size_from_b_to_a / 1024**2)) + ' MB.')
 
-    if level == 'high':
-        if len(must_remove_from_a) > 0:
-            print('\nNumber of item(s) to remove from ' + first_folder + ' is ' + str(len(must_remove_from_a)) + '.')
-            logFile.info('\nTotal size of item(s) to remove from ' + first_folder + ' is ' +
-                         str(len(must_remove_from_a)) + '.')
-            print('Size of item(s) to remove from ' + first_folder + ' is ' +
-                  str("{0:.0f}".format(size_to_remove_from_a / 1024 ** 2)) + ' MB.')
-            logFile.info('Size of item(s) to remove from ' + first_folder + ' is ' +
-                         str("{0:.0f}".format(size_to_remove_from_a / 1024 ** 2)) + ' MB.')
+    if len(must_remove_from_a) > 0:
+        print('\nNumber of item(s) to remove from ' + first_folder + ' is ' + str(len(must_remove_from_a)) + '.')
+        logFile.info('\nTotal size of item(s) to remove from ' + first_folder + ' is ' +
+                     str(len(must_remove_from_a)) + '.')
+        print('Size of item(s) to remove from ' + first_folder + ' is ' +
+              str("{0:.2f}".format(size_to_remove_from_a / 1024**2)) + ' MB.')
+        logFile.info('Size of item(s) to remove from ' + first_folder + ' is ' +
+                     str("{0:.2f}".format(size_to_remove_from_a / 1024**2)) + ' MB.')
 
-        if len(must_remove_from_b) > 0:
-            print('Number of item(s) to remove from ' + second_folder + ' is ' + str(len(must_remove_from_b)) + '.')
-            logFile.info('Total size of item(s) to remove from ' + second_folder + ' is ' +
-                         str(len(must_remove_from_b)) + '.')
+    if len(must_remove_from_b) > 0:
+        print('Number of item(s) to remove from ' + second_folder + ' is ' + str(len(must_remove_from_b)) + '.')
+        logFile.info('Total size of item(s) to remove from ' + second_folder + ' is ' +
+                     str(len(must_remove_from_b)) + '.')
 
-            print('Size of item(s) to remove from ' + second_folder + ' is ' +
-                  str("{0:.0f}".format(size_to_remove_from_b / 1024 ** 2)) + ' MB.')
-            logFile.info('Size of item(s) to remove from ' + second_folder + ' is ' +
-                         str("{0:.0f}".format(size_to_remove_from_b / 1024 ** 2)) + ' MB.')
+        print('Size of item(s) to remove from ' + second_folder + ' is ' +
+              str("{0:.2f}".format(size_to_remove_from_b / 1024**2)) + ' MB.')
+        logFile.info('Size of item(s) to remove from ' + second_folder + ' is ' +
+                     str("{0:.2f}".format(size_to_remove_from_b / 1024**2)) + ' MB.')
 
     print('--- {0:.3f} --- seconds\n'.format(time.time() - start_time))
     logFile.info('--- {0:.3f} --- seconds'.format(time.time() - start_time))
 
     result = [not_exist_in_a, not_exist_in_b, to_be_updated_from_b_to_a, to_be_updated_from_a_to_b, must_remove_from_a,
-              must_remove_from_b, level]
+              must_remove_from_b]
 
     number_files_to_transfer = 0
-    for index in range(len(result) - 1):
-        number_files_to_transfer += len(result[index])
+    for array in result:
+        number_files_to_transfer += len(array)
     # count how many files script should transfer in total
 
     result.append(number_files_to_transfer)
@@ -641,7 +644,7 @@ def sync_files(compare_result, first_folder, second_folder):
 
     start_time = time.time()
     not_exist_in_a, not_exist_in_b, to_be_updated_from_b_to_a, to_be_updated_from_a_to_b, \
-        remove_from_a, remove_from_b, level, number_files_to_handle = compare_result
+        remove_from_a, remove_from_b, number_files_to_handle = compare_result
 
     total_size_copied_updated = 0
     total_size_removed = 0
@@ -662,6 +665,10 @@ def sync_files(compare_result, first_folder, second_folder):
             try:
                 send2trash.send2trash(file_to_delete)
             except OSError:
+                # ask user to close program that uses file that should be removed and try to perform removing again
+
+                logFile.error(traceback.format_exc())
+                # write error traceback to logFile
                 print(file_to_delete + ' has been opened in another app. Close all apps that can use this file and '
                                        'try again.')
                 logFile.warning(file_to_delete + ' has been opened in another app. Close all apps that can use '
@@ -787,12 +794,11 @@ def sync_files(compare_result, first_folder, second_folder):
     if len(not_exist_in_b) > 0:
         copy_items(not_exist_in_b, second_folder)
 
-    if level == 'high':
-        if len(remove_from_a) > 0:
-            remove_items(remove_from_a, 'first')
+    if len(remove_from_a) > 0:
+        remove_items(remove_from_a, 'first')
 
-        if len(remove_from_b) > 0:
-            remove_items(remove_from_b, 'second')
+    if len(remove_from_b) > 0:
+        remove_items(remove_from_b, 'second')
 
     if were_created > 0:
         print('\n' + str(were_created) + ' folders were created.')
@@ -827,6 +833,7 @@ def sync_files(compare_result, first_folder, second_folder):
     # uncomment two lines above for testing without it / don't delete it
 
 menu_choose_folders()
+# let user choose folders to sync - here program starts
 
 firstFolderSynced = has_it_ever_been_synced(firstFolder)
 logFile.debug(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
@@ -835,6 +842,14 @@ logConsole.debug(firstFolder + ' Has been synced before? ' + str(firstFolderSync
 secondFolderSynced = has_it_ever_been_synced(secondFolder)
 logFile.debug(secondFolder + ' Has been synced before? ' + str(secondFolderSynced))
 logConsole.debug(secondFolder + ' Has been synced before? ' + str(secondFolderSynced))
+# check if there is snapshot of previous sync inside toot directory
+
+if firstFolderSynced and secondFolderSynced:
+    bothSynced = True
+else:
+    bothSynced = False
+# check if both folders were synced before
+
 
 rootFirstFolder = re.search(r'(\w+$)', firstFolder).group(0)
 rootSecondFolder = re.search(r'(\w+$)', secondFolder).group(0)
@@ -852,9 +867,11 @@ def menu_before_sync():
         start_syncing = input('Do you want to sync these files? y/n: ').lower()
         logFile.info('Do you want to sync these files? y/n: ')
         if start_syncing == 'y':
+            logFile.info('User agreed to sync files.')
             sync_files(compareResult, firstFolder, secondFolder)
             break
         elif start_syncing == 'n':
+            logFile.info('User denied to sync files.')
             # continue without copy/remove files
             break
         else:
@@ -862,29 +879,21 @@ def menu_before_sync():
             logFile.info('Error of input. Try again.')
             continue
 
-if firstFolderSynced and secondFolderSynced:
-    compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'high')
-    if compareResult[7] > 0:
-        # call sync function if there is something to sync
-        menu_before_sync()
-    else:
-        print('There is nothing to copy or remove.')
-        logFile.info('There is nothing to copy or remove.')
 
-elif firstFolderSynced or secondFolderSynced:
-    print('Ooops')
-    # compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'middle')
+compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder)
+# start to compare folders that user has chosen
+
+if compareResult[6] > 0:
+    # call sync function if there is something to sync
+    menu_before_sync()
 else:
-    compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder, 'low')
-
-    if compareResult[7] > 0:
-        # call sync function if there is something to sync
-        menu_before_sync()
-    else:
+    if not firstFolderSynced:
         store_snapshot_before_exit(firstFolder, rootFirstFolder, firstFolderSynced)
+    if not secondFolderSynced:
         store_snapshot_before_exit(secondFolder, rootSecondFolder, secondFolderSynced)
         # store snapshots of folders if they have been synced but no differences have been found
-
+    print('There is nothing to copy or remove.')
+    logFile.info('There is nothing to copy or remove.')
 
 print('Goodbye.')
 logFile.info('Goodbye.')
