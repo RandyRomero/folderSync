@@ -363,14 +363,20 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         paths_of_snap_a.append(snap_a[key][1][3])
         # --//--
 
+        if snap_a[key][0] == 'file':
+            num_files_in_a += 1
+            size_of_items_in_a += snap_a[key][2]
+            # count files in the first folder
+        else:
+            num_folders_in_a += 1
+            # count folders in the first folder
+
         if snap_a[key][1][3] in paths_of_snap_b:
             # if item with same path exists in both folders to be synced
 
             if snap_a[key][0] == 'file':
                 # if item is file - compare them
-                num_files_in_a += 1
-                size_of_items_in_a += snap_a[key][2]
-                # count files in the first folder
+
                 same_path_and_name.append(snap_a[key])
                 corresponding_file_in_b = os.path.join(root_second_folder, snap_a[key][1][3])
                 # merge root of second folder with path of file/folder from first folder
@@ -398,9 +404,6 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                                 # add file to list of equal files
                                 equal_files.append(snap_a[key])
                                 break
-            else:
-                num_folders_in_a += 1
-                # count folders in the first folder
 
         else:
             # if file in first folder has not been found in the second folder
@@ -714,6 +717,8 @@ def sync_files(compare_result, first_folder, second_folder):
                     continue
             else:
                 # item was removed with its folder before
+                print(full_path + ' was removed.')
+                logFile.info(full_path + ' was removed.')
                 were_removed += 1
 
             if items_to_remove[item][0] == 'file' and remove_state:
