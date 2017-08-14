@@ -569,9 +569,9 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         logFile.info('Number of item(s) to transfer from ' + first_folder + ' to ' + second_folder + ' is ' +
                      str(number_to_transfer_from_a_to_b) + '.\n')
 
-        print('Total size of file(s) to transfer from ' + first_folder + '  to ' + second_folder + ' is ' +
+        print('Total size of file(s) to transfer from ' + first_folder + ' to ' + second_folder + ' is ' +
               str("{0:.2f}".format(size_from_a_to_b / 1024**2)) + ' MB.')
-        logFile.info('Total size of file(s) to transfer from ' + first_folder + '  to ' + second_folder + ' is ' +
+        logFile.info('Total size of file(s) to transfer from ' + first_folder + ' to ' + second_folder + ' is ' +
                      str("{0:.2f}".format(size_from_a_to_b / 1024**2)) + ' MB.')
 
     if number_to_transfer_from_b_to_a > 0:
@@ -580,9 +580,9 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         logFile.info('Number item(s) to transfer from ' + second_folder + ' to ' + first_folder + ' is ' +
                      str(number_to_transfer_from_b_to_a) + '.\n')
 
-        print('Total size of file(s) to transfer from ' + second_folder + '  to ' + first_folder + ' is ' +
+        print('Total size of file(s) to transfer from ' + second_folder + ' to ' + first_folder + ' is ' +
               str("{0:.2f}".format(size_from_b_to_a / 1024**2)) + ' MB.')
-        logFile.info('Total size of file(s) to transfer from ' + second_folder + '  to ' + first_folder + ' is ' +
+        logFile.info('Total size of file(s) to transfer from ' + second_folder + ' to ' + first_folder + ' is ' +
                      str("{0:.2f}".format(size_from_b_to_a / 1024**2)) + ' MB.')
 
     if len(must_remove_from_a) > 0:
