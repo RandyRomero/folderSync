@@ -326,13 +326,7 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
 
     print()  # this print() is needed to make offset
 
-    def check_age_files(file_from_a, file_from_b):
-        nonlocal size_from_a_to_b
-        nonlocal size_from_b_to_a
-        nonlocal number_to_transfer_from_a_to_b
-        nonlocal number_to_transfer_from_b_to_a
-        nonlocal updated_items_a
-        nonlocal updated_items_b
+    def compare_mtime_files(file_from_a, file_from_b):
         nonlocal both_updated
         nonlocal skipped_files
 
@@ -346,17 +340,26 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
 
         else:
             if file_from_a[3] > file_from_b[3]:
-                # file in A newer than file in B -> add it to list to be copied from A to B
-                to_be_updated_from_a_to_b.append([file_from_a[1][0], file_from_b[1][0], file_from_a[2]])
-                # add to list another list with full paths of both files
-                number_to_transfer_from_a_to_b += 1
-                size_from_a_to_b += file_from_a[2]
+                return 'firstNewer'
             elif file_from_a[3] < file_from_b[3]:
-                # file in A older than file in B -> add it to list to be copied from B to A
-                to_be_updated_from_b_to_a.append([file_from_b[1][0], file_from_a[1][0], file_from_b[2]])
-                # add to list another list with full paths of both files
-                number_to_transfer_from_b_to_a += 1
-                size_from_b_to_a += file_from_b[2]
+                return 'secondName'
+            else:
+                return 'equal'
+
+    def compare_binary(file_from_a, file_from_b):
+        if file_from_a[2] > 1024 ** 3:
+            print('It\'s gonna take some time, be patient.')
+        with open(file_from_a[1][0], 'rb') as f1, open(file_from_b[1][0], 'rb') as f2:
+            while True:
+                # byte-to-byte comparison with buffer
+                b1 = f1.read(8192)
+                b2 = f2.read(8192)
+                if b1 != b2:
+                    # content is not equal
+                    return False
+                if not b1:
+                    # content is equal
+                    return True
 
     # check A against B
     for key in snap_a.keys():
@@ -380,30 +383,40 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                 same_path_and_name.append(snap_a[key])
                 corresponding_file_in_b = os.path.join(root_second_folder, snap_a[key][1][3])
                 # merge root of second folder with path of file/folder from first folder
-                # to get a probability compare files
+                # to get a probability to compare files
 
                 print('Comparing files... ' + snap_a[key][1][3])
-                if snap_a[key][2] != snap_b[corresponding_file_in_b][2]:
-                    # if sizes of files are not equal, skip binary comparison
-                    check_age_files(snap_a[key], snap_b[corresponding_file_in_b])
-                    # check which file is newer
-                else:
-                    if snap_a[key][2] > 1024**3:
-                        print('It\'s gonna take some time, be patient.')
-                    with open(snap_a[key][1][0], 'rb') as f1, open(snap_b[corresponding_file_in_b][1][0], 'rb') as f2:
-                        while True:
-                            # byte-to-byte comparison with buffer
-                            b1 = f1.read(8192)
-                            b2 = f2.read(8192)
-                            if b1 != b2:
-                                check_age_files(snap_a[key], snap_b[corresponding_file_in_b])
-                                # if files are not the same - check which one is newer
-                                break
-                            if not b1:
-                                # if no difference found till the end of files
-                                # add file to list of equal files
-                                equal_files.append(snap_a[key])
-                                break
+
+                if compare_mtime_files(snap_a[key], snap_b[corresponding_file_in_b]) == 'firstNewer':
+                    # file in A newer than file in B -> check if files have indeed different content
+                    if compare_binary(snap_a[key], snap_b[corresponding_file_in_b]):
+                        # if content of files the same - time doesn't matter. Files are equal.
+                        equal_files.append(snap_a[key])
+                    else:
+                        # files have different content - add them to list to be copied from A to B
+                        to_be_updated_from_a_to_b.append([snap_a[key][1][0], snap_b[corresponding_file_in_b][1][0],
+                                                          snap_a[key][2]])
+                        # add to list another list with full paths of both files
+                        number_to_transfer_from_a_to_b += 1
+                        size_from_a_to_b += snap_b[corresponding_file_in_b][2]
+                elif compare_mtime_files(snap_a[key], snap_b[corresponding_file_in_b]) == 'secondNewer':
+                    if compare_binary(snap_a[key], snap_b[corresponding_file_in_b]):
+                        # if content of files the same - time doesn't matter. Files are equal.
+                        equal_files.append(snap_a[key])
+                    else:
+                        # file in A older than file in B -> add it to list to be copied from B to A
+                        to_be_updated_from_b_to_a.append([snap_b[corresponding_file_in_b][1][0], snap_a[1][0],
+                                                          snap_b[corresponding_file_in_b][2]])
+                        # add to list another list with full paths of both files and size of file in B
+                        number_to_transfer_from_b_to_a += 1
+                        size_from_b_to_a += snap_b[corresponding_file_in_b][2]
+                elif compare_mtime_files(snap_a[key], snap_b[corresponding_file_in_b]) == 'equal':
+                    if snap_a[key][2] == snap_b[corresponding_file_in_b][2]:
+                        equal_files.append(snap_a[key])
+                        # [2] - it is size. If mtime and size are equal - files are equal
+                    else:
+                        skipped_files.append(snap_a[key][1][3])
+                        # if mtime is equal, bit size is not - add it to list to tell to user to check manually
 
         else:
             # if file in first folder has not been found in the second folder
