@@ -119,6 +119,13 @@ def has_it_ever_been_synced(path_to_root_folder):
         return False
 
 
+def check_longevity_of_path(path):
+    # this helps to avoid Windows constraint to longevity of path
+    if len(path) > 259:
+        return '\\\\?\\' + path
+    return path
+
+
 def get_snapshot(path_to_root_folder, root_folder):
     # get all file and folder paths,
     # and collect file size and file time of modification
@@ -151,7 +158,7 @@ def get_snapshot(path_to_root_folder, root_folder):
             folders_number += 1
 
         for file in files:
-            full_path = os.path.join(root, file)
+            full_path = check_longevity_of_path(os.path.join(root, file))
             path_wout_root = full_path.split(path_to_root_folder + '\\')[1]
             path_with_root = os.path.join(root_folder, path_wout_root)
             all_paths = [full_path, root_folder, path_with_root, path_wout_root]
@@ -765,7 +772,8 @@ def sync_files(compare_result, first_folder, second_folder):
                     logFile.warning('WARNING: ' + full_path_item_that_not_exits_yet + ' already exists!')
                     continue
                 else:
-                    shutil.copy2(full_path_item_in_this_folder, full_path_item_that_not_exits_yet)
+                    shutil.copy2(full_path_item_in_this_folder,
+                                 check_longevity_of_path(full_path_item_that_not_exits_yet))
                     # copy file
                     were_copied += 1
                     total_size_copied_updated += file[2]
