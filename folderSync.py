@@ -500,13 +500,21 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         logFile.info(path[1][0])
     logFile.info('\n')
 
-    if firstFolderSynced:
+    if firstFolderSynced and secondFolderSynced:
         if len(not_exist_in_b) > 0:
             print(str(len(not_exist_in_b)) + ' new item(s) in ' + first_folder)
             logFile.info(str(len(not_exist_in_b)) + ' new item(s) in ' + first_folder + '\n')
             for item in not_exist_in_b:
                 logFile.info(item)
             logFile.info('\n')
+
+        if len(not_exist_in_a) > 0:
+            print(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder)
+            logFile.info(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder)
+            for item in not_exist_in_a:
+                logFile.info(item)
+            logFile.info('\n')
+
     else:
         if len(not_exist_in_b) > 0:
             print(str(len(not_exist_in_b)) + ' item(s) from  ' + first_folder + ' don\'t exist in \'' +
@@ -517,14 +525,6 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                 logFile.info(path[1][0])
             logFile.info('\n')
 
-    if secondFolderSynced:
-        if len(not_exist_in_a) > 0:
-            print(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder)
-            logFile.info(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder)
-            for item in not_exist_in_a:
-                logFile.info(item)
-            logFile.info('\n')
-    else:
         if len(not_exist_in_a) > 0:
             print(str(len(not_exist_in_a)) + ' item(s) from  ' + second_folder + ' don\'t exist in \'' +
                   first_folder + '\'')
