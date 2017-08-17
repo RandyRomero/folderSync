@@ -814,6 +814,12 @@ def sync_files(compare_result, first_folder, second_folder):
                     logFile.warning('WARNING: ' + full_path_item_that_not_exits_yet + ' already exists!')
                     continue
                 else:
+                    print(' - ' + file[1][3] + ' is copying...')
+                    logFile.info(' - ' + file[1][3] + ' is copying...')
+                    if file[2] > 1024**3:
+                        print(file[1][3] + ' is heavy. Please be patient.')
+                        logFile.info(file[1][3] + ' is heavy. Please be patient...')
+
                     shutil.copy2(full_path_item_in_this_folder,
                                  check_longevity_of_path(full_path_item_that_not_exits_yet))
                     # copy file
