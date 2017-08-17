@@ -68,6 +68,40 @@ def set_loggers():
 logFile, logConsole = set_loggers()
 
 
+def clean_log_folder(max_size):
+    # clean log files from log folder when their total size is more than max_size
+
+    logfile_list = []
+
+    def check_logs_size():
+        # count size of all logs and create a list of logs
+        nonlocal logfile_list
+        total_size = 0
+
+        for root, subfolders, logfiles in os.walk('log'):
+            for logfile in logfiles:
+                path_to_logfile = os.path.join(os.getcwd(), root, logfile)
+                logfile_list.append([path_to_logfile, os.path.getctime(path_to_logfile)])
+                total_size += os.path.getsize(path_to_logfile)
+
+        logFile.info('There is {0:.02f} MB of logs'.format(total_size / 1024**2))
+
+        return total_size
+
+    while check_logs_size() > max_size * 1024**2:
+        # if log files weighs more than max_size megabytes - recursively remove oldest ones one by one
+        logfile_to_delete = ''
+        earliest = time.time()
+        for file, creation_time in logfile_list:
+            if creation_time < earliest:
+                earliest = creation_time
+                logfile_to_delete = file
+        logConsole.info(logfile_to_delete)
+        send2trash.send2trash(logfile_to_delete)
+        del logfile_list[:]
+        # erase list of files otherwise script tries to remove already removed files
+
+
 def choose_folder():
     # used to check validity of file's path given by user
     while True:
@@ -857,6 +891,10 @@ def sync_files(compare_result, first_folder, second_folder):
     store_snapshot_before_exit(firstFolder, rootFirstFolder, firstFolderSynced)
     store_snapshot_before_exit(secondFolder, rootSecondFolder, secondFolderSynced)
     # uncomment two lines above for testing without it / don't delete it
+
+clean_log_folder(20)
+# argument is max size of folder with logs in megabytes
+# if there are more than that - remove oldest logs
 
 menu_choose_folders()
 # let user choose folders to sync - here program starts
