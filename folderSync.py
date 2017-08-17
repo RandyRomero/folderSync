@@ -276,8 +276,6 @@ def get_changes_between_states_of_folders(path_to_folder, root_of_path):
             if current_folder_snapshot[key][0] == 'file':
                 if current_folder_snapshot[key][3] != previous_snapshot[key][3]:
                     items_with_changed_mtime.append(current_folder_snapshot[key][1][3])
-                    logConsole.debug('Modification time of ' + current_folder_snapshot[key][1][0] + ' has changed.')
-                    # check if it works
                     logFile.info('Modification time of ' + current_folder_snapshot[key][1][0] + ' has changed.')
 
     for path in items_from_current_snapshot:
@@ -383,7 +381,7 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
             if file_from_a[3] > file_from_b[3]:
                 return 'firstNewer'
             elif file_from_a[3] < file_from_b[3]:
-                return 'secondName'
+                return 'secondNewer'
             else:
                 return 'equal'
 
@@ -404,7 +402,8 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
 
     # check A against B
     for key in snap_a.keys():
-        paths_of_snap_a.append(snap_a[key][1][3])
+        path_to_file_in_a_without_root = snap_a[key][1][3]
+        paths_of_snap_a.append(path_to_file_in_a_without_root)
         # --//--
 
         if snap_a[key][0] == 'file':
@@ -415,20 +414,29 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
             num_folders_in_a += 1
             # count folders in the first folder
 
-        if snap_a[key][1][3] in paths_of_snap_b:
+        if path_to_file_in_a_without_root in paths_of_snap_b:
             # if item with same path exists in both folders to be synced
 
             if snap_a[key][0] == 'file':
                 # if item is file - compare them
 
                 same_path_and_name.append(snap_a[key])
-                corresponding_file_in_b = os.path.join(root_second_folder, snap_a[key][1][3])
+                corresponding_file_in_b = os.path.join(root_second_folder, path_to_file_in_a_without_root)
                 # merge root of second folder with path of file/folder from first folder
                 # to get a probability to compare files
 
-                print('Comparing files... ' + snap_a[key][1][3])
+                print('Comparing files... ' + path_to_file_in_a_without_root)
 
-                if compare_mtime_files(snap_a[key], snap_b[corresponding_file_in_b]) == 'firstNewer':
+                if bothSynced:
+                    if path_to_file_in_a_without_root not in updated_items_a \
+                            and path_to_file_in_a_without_root not in updated_items_b:
+                        # check if both files have the same modification time that they have before
+                        equal_files.append(snap_a[key])
+                        # that means either hasn't change since last time
+                        continue
+
+                which_file_is_newer = compare_mtime_files(snap_a[key], snap_b[corresponding_file_in_b])
+                if which_file_is_newer == 'firstNewer':
                     # file in A newer than file in B -> check if files have indeed different content
                     if compare_binary(snap_a[key], snap_b[corresponding_file_in_b]):
                         # if content of files the same - time doesn't matter. Files are equal.
@@ -440,28 +448,28 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                         # add to list another list with full paths of both files
                         number_to_transfer_from_a_to_b += 1
                         size_from_a_to_b += snap_b[corresponding_file_in_b][2]
-                elif compare_mtime_files(snap_a[key], snap_b[corresponding_file_in_b]) == 'secondNewer':
+                elif which_file_is_newer == 'secondNewer':
                     if compare_binary(snap_a[key], snap_b[corresponding_file_in_b]):
                         # if content of files the same - time doesn't matter. Files are equal.
                         equal_files.append(snap_a[key])
                     else:
                         # file in A older than file in B -> add it to list to be copied from B to A
-                        to_be_updated_from_b_to_a.append([snap_b[corresponding_file_in_b][1][0], snap_a[1][0],
+                        to_be_updated_from_b_to_a.append([snap_b[corresponding_file_in_b][1][0], snap_a[key][1][0],
                                                           snap_b[corresponding_file_in_b][2]])
                         # add to list another list with full paths of both files and size of file in B
                         number_to_transfer_from_b_to_a += 1
                         size_from_b_to_a += snap_b[corresponding_file_in_b][2]
-                elif compare_mtime_files(snap_a[key], snap_b[corresponding_file_in_b]) == 'equal':
+                elif which_file_is_newer == 'equal':
                     if snap_a[key][2] == snap_b[corresponding_file_in_b][2]:
                         equal_files.append(snap_a[key])
                         # [2] - it is size. If mtime and size are equal - files are equal
                     else:
-                        skipped_files.append(snap_a[key][1][3])
+                        skipped_files.append(path_to_file_in_a_without_root)
                         # if mtime is equal, bit size is not - add it to list to tell to user to check manually
 
         else:
             # if file in first folder has not been found in the second folder
-            if snap_a[key][1][3] in were_removed_from_b:
+            if path_to_file_in_a_without_root in were_removed_from_b:
                 must_remove_from_a.append(snap_a[key])
                 if snap_a[key][0] == 'file':
                     size_to_remove_from_a += snap_a[key][2]
@@ -541,7 +549,7 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
         logFile.info(path[1][0])
     logFile.info('\n')
 
-    if firstFolderSynced and secondFolderSynced:
+    if bothSynced:
         if len(not_exist_in_b) > 0:
             print(str(len(not_exist_in_b)) + ' new item(s) in ' + first_folder)
             logFile.info(str(len(not_exist_in_b)) + ' new item(s) in ' + first_folder + '\n')
