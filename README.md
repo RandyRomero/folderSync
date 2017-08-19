@@ -10,3 +10,4 @@ During second and other syncs script can delete files from folder if they were d
 It can also detected and hadle updated files.
 For file comparison it uses timestamps, size of file and binary comparison - depend on a situation.
 Script also writes logs to .\log folder and clear the oldest, when size of log folder is more than 20 Mb.
+You need only to download folderSync.py file to work. 
