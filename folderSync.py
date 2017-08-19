@@ -1,9 +1,14 @@
 #! python3
 
 # Program that can sync all files and folders between two chosen folders.
-# I need it to keep my photo-backup updated.
-# But script should be able to sync in both ways.
-# And keep track of changes in both folders.'''
+# Dedicated for Windows.
+# Purpose of that script is to make exact duplicates of two folders.
+# For example, you can back up and update your backups with this script.
+# During first sync script assumes all files that do not exist in one folder as new for second folder and vice versa.
+# During second and other sync script can delete files from folder if they were deleted in the other.
+# It can also detected updated files.
+# For file comparison it uses timestamps, size of file and binary comparison - depend on a situation.
+# Script also write logs to .\log folder and clear the oldest, when size of loge folder is more than 20 Mb.
 
 import logging
 import math
@@ -975,37 +980,3 @@ else:
 
 print('Goodbye.')
 logFile.info('Goodbye.')
-
-
-''' crap '''
-
-# getattr(logFile, level)(message)
-# what is above means "logFile.level(message)" where level is method's name which is
-# known only by runtime. For example "logFile.info(message)" where 'info' is coming from variable
-
-
-# def devLap():
-
-# 	logConsole.debug('You are on dev laptop. Using default adressess for test.')
-# 	logFile.debug('You are on dev laptop. Using default adressess for test.')
-
-# #paths hardcoded for the sake of speed of testing
-# # Scrip gets the name of PC in order to work on my several laptops without
-# # typing paths for folders to sync
-
-# if platform.node() == 'ZenBook3':
-# 	devLap()
-# 	firstFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\A'
-# 	secondFolder = 'D:\\YandexDisk\\Studies\\Python\\folderSync\\B'
-# elif platform.node() == 'AcerVNitro':
-# 	devLap()
-# 	firstFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\A'
-# 	secondFolder = 'C:\\yandex.disk\\Studies\\Python\\folderSync\\B'
-# elif platform.node() == 'ASUSG751':
-# 	devLap()
-# 	firstFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\A'
-# 	secondFolder = 'C:\\YandexDisk\\Studies\\Python\\folderSync\\B'
-# else:
-# 	logConsole.debug('Unknown computer.')
-# 	logFile.debug('Unknown computer.')
-# 	firstFolder, secondFolder = menuChooseFolders()
