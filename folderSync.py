@@ -89,7 +89,7 @@ def clean_log_folder(max_size):
                 logfile_list.append([path_to_logfile, os.path.getctime(path_to_logfile)])
                 total_size += os.path.getsize(path_to_logfile)
 
-        logFile.info('There is {0:.02f} MB of logs'.format(total_size / 1024**2))
+        logFile.info('There is {0:.02f} MB of logs.\n'.format(total_size / 1024**2))
 
         return total_size
 
@@ -101,7 +101,7 @@ def clean_log_folder(max_size):
             if creation_time < earliest:
                 earliest = creation_time
                 logfile_to_delete = file
-        logConsole.info(logfile_to_delete)
+        logFile.info('Removing old log file: ' + logfile_to_delete)
         send2trash.send2trash(logfile_to_delete)
         del logfile_list[:]
         # erase list of files otherwise script tries to remove already removed files
@@ -171,7 +171,7 @@ def get_snapshot(path_to_root_folder, root_folder):
 
     start_time = time.time()
 
-    logFile.info('\nGetting snapshot of ' + path_to_root_folder + '...')
+    logFile.info('Getting snapshot of \'' + path_to_root_folder + '\'...')
 
     folders_number = 0
     files_number = 0
@@ -210,9 +210,9 @@ def get_snapshot(path_to_root_folder, root_folder):
             files_number += 1
 
     logFile.info('There are ' + str(folders_number) + ' folders and ' +
-                 str(files_number) + ' files in ' + path_to_root_folder)
-    logFile.info('Total size of ' + path_to_root_folder + ' is ' +
-                 str("{0:.2f}".format(total_size / 1024**2)) + ' MB.\n')
+                 str(files_number) + ' files in \'' + path_to_root_folder + '\'')
+    logFile.info('Total size of \'' + path_to_root_folder + '\' is ' +
+                 str("{0:.2f}".format(total_size / 1024**2)) + ' MB.')
     logFile.info('--- {0:.3f} seconds ---\n'.format(time.time() - start_time))
 
     return current_snapshot
@@ -530,20 +530,20 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
 
     print('')
     print('###########################')
-    print('There are ' + str(num_folders_in_a) + ' folders and ' + str(num_files_in_a) + ' files in ' + first_folder +
-          ' with total size of ' + str("{0:.2f}".format(size_of_items_in_a / 1024**2)) + ' MB.')
-    logFile.info('There are ' + str(num_folders_in_a) + ' folders and ' + str(num_files_in_a) + ' files in ' +
-                 first_folder + ' with total size of ' +
+    print('There are ' + str(num_folders_in_a) + ' folders and ' + str(num_files_in_a) + ' files in \'' + first_folder +
+          '\' with total size of ' + str("{0:.2f}".format(size_of_items_in_a / 1024**2)) + ' MB.')
+    logFile.info('There are ' + str(num_folders_in_a) + ' folders and ' + str(num_files_in_a) + ' files in \'' +
+                 first_folder + '\' with total size of ' +
                  str("{0:.2f}".format(size_of_items_in_a / 1024 ** 2)) + ' MB.')
 
-    print('There are ' + str(num_folders_in_b) + ' folders and ' + str(num_files_in_b) + ' files in ' + second_folder +
-          ' with total size of ' + str("{0:.2f}".format(size_of_items_in_b / 1024 ** 2)) + ' MB.')
-    logFile.info('There are ' + str(num_folders_in_b) + ' folders and ' + str(num_files_in_b) + ' files in ' +
-                 second_folder + ' with total size of ' +
+    print('There are ' + str(num_folders_in_b) + ' folders and ' + str(num_files_in_b) + ' files in \'' +
+          second_folder + '\' with total size of ' + str("{0:.2f}".format(size_of_items_in_b / 1024 ** 2)) + ' MB.')
+    logFile.info('There are ' + str(num_folders_in_b) + ' folders and ' + str(num_files_in_b) + ' files in \'' +
+                 second_folder + '\' with total size of ' +
                  str("{0:.2f}".format(size_of_items_in_b / 1024 ** 2)) + ' MB.')
 
     print(str(len(same_path_and_name)) + ' file(s) that are common for both folders.')
-    logFile.info(str(len(same_path_and_name)) + ' file(s) that are common for both folders.')
+    logFile.info(str(len(same_path_and_name)) + ' file(s) that are common for both folders:')
     for path in same_path_and_name:
         logFile.info(path[1][0])
     logFile.info('\n')
@@ -552,7 +552,6 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
     logFile.info(str(len(equal_files)) + ' file(s) are equal.')
     for path in equal_files:
         logFile.info(path[1][0])
-    logFile.info('\n')
 
     if bothSynced:
         if len(not_exist_in_b) > 0:
@@ -672,7 +671,7 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                      str("{0:.2f}".format(size_to_remove_from_b / 1024**2)) + ' MB.')
 
     print('--- {0:.3f} --- seconds\n'.format(time.time() - start_time))
-    logFile.info('--- {0:.3f} --- seconds'.format(time.time() - start_time))
+    logFile.info('--- {0:.3f} --- seconds'.format(time.time() - start_time) + '\n')
 
     result = [not_exist_in_a, not_exist_in_b, to_be_updated_from_b_to_a, to_be_updated_from_a_to_b, must_remove_from_a,
               must_remove_from_b]
@@ -704,7 +703,8 @@ def store_snapshot_before_exit(folder_to_take_snapshot, root_folder, folder_sync
     shel_file['to_remove_from_a'] = remove_from_a_next_time
     shel_file['to_remove_from_b'] = remove_from_b_next_time
 
-    logFile.info('Snapshot of ' + root_folder + ' was stored in ' + folder_to_take_snapshot + ' at ' + store_time)
+    logFile.info('Snapshot of ' + root_folder + ' was stored in ' + folder_to_take_snapshot + ' at ' +
+                 store_time + '\n')
 
     shel_file.close()
 
@@ -911,6 +911,11 @@ def sync_files(compare_result, first_folder, second_folder):
     store_snapshot_before_exit(secondFolder, rootSecondFolder, secondFolderSynced)
     # uncomment two lines above for testing without it / don't delete it
 
+print('Hello. This is folderSync.py written by Aleksandr Mikheev.\n'
+      'It is a program that can sync all files and folders between two chosen directories (for Windows).\n')
+logFile.info('Hello. This is folderSync.py written by Aleksandr Mikheev.\n'
+             'It is a program that can sync all files and folders between two chosen directories (for Windows).\n')
+
 clean_log_folder(20)
 # argument is max size of folder with logs in megabytes
 # if there are more than that - remove oldest logs
@@ -919,12 +924,10 @@ menu_choose_folders()
 # let user choose folders to sync - here program starts
 
 firstFolderSynced = has_it_ever_been_synced(firstFolder)
-logFile.debug(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
-logConsole.debug(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
+logFile.info(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
 
 secondFolderSynced = has_it_ever_been_synced(secondFolder)
-logFile.debug(secondFolder + ' Has been synced before? ' + str(secondFolderSynced))
-logConsole.debug(secondFolder + ' Has been synced before? ' + str(secondFolderSynced))
+logFile.info(secondFolder + ' Has been synced before? ' + str(secondFolderSynced) + '\n')
 # check if there is snapshot of previous sync inside toot directory
 
 if firstFolderSynced and secondFolderSynced:
