@@ -495,12 +495,12 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
                 # if item was removed from B - add it to list of items which will be removed from A
                 continue
             else:
-                print('-> Doesn\'t exist in \'' + secondFolder + '\' and will be copied there.')
-                logFile.info('-> Doesn\'t exist in \'' + secondFolder + '\' and will be copied there.')
                 not_exist_in_b.append(snap_a[key])
                 # if file doesn't exist in B -> add it in list to be copied from A
                 number_to_transfer_from_a_to_b += 1
                 if snap_a[key][0] == 'file':
+                    print('-> Doesn\'t exist in \'' + secondFolder + '\' and will be copied there.')
+                    logFile.info('-> Doesn\'t exist in \'' + secondFolder + '\' and will be copied there.')
                     size_from_a_to_b += snap_a[key][2]
 
     for key in snap_b.keys():
@@ -829,8 +829,8 @@ def sync_files(compare_result, first_folder, second_folder):
             if os.path.exists(array[0]) and os.path.exists(array[1]):
                 if delete(array[1]):
                     shutil.copy2(array[0], array[1])
-                    print('- \'' + array[1] + '\' was updated.')
-                    logFile.info('- \'' + array[1] + '\' was updated.')
+                    print('\'' + array[1] + '\' was updated.')
+                    logFile.info('\'' + array[1] + '\' was updated.')
                     total_size_copied_updated += array[2]
                     were_updated += 1
                 else:
