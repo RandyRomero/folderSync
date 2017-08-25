@@ -302,7 +302,7 @@ def get_changes_between_states_of_folders(path_to_folder, root_of_path):
     # 3. If size is equal, but mtime is different, check byte-by-byte
 
 
-def snapshot_comparison(first_folder, second_folder, root_first_folder, root_second_folder):
+def compare_snapshot(first_folder, second_folder, root_first_folder, root_second_folder):
     # compare files in binary mode if folders haven't been synced before
 
     start_time = time.time()
@@ -313,8 +313,6 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
     num_folders_in_b = 0
     must_remove_from_a = []
     must_remove_from_b = []
-    new_in_a = []
-    new_in_b = []
     not_exist_in_a = []
     not_exist_in_b = []
     number_to_transfer_from_a_to_b = 0
@@ -415,6 +413,8 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
             num_files_in_a += 1
             size_of_items_in_a += snap_a[key][2]
             # count files in the first folder
+            print('Comparing files... \'' + path_to_file_in_a_without_root + '\'')
+            logFile.info('Comparing files... \'' + path_to_file_in_a_without_root + '\'')
         else:
             num_folders_in_a += 1
             # count folders in the first folder
@@ -430,12 +430,12 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                 # merge root of second folder with path of file/folder from first folder
                 # to get a probability to compare files
 
-                print('Comparing files... ' + path_to_file_in_a_without_root)
-
                 if bothSynced:
                     if path_to_file_in_a_without_root not in updated_items_a \
                             and path_to_file_in_a_without_root not in updated_items_b:
                         # check if both files have the same modification time that they have before
+                        print('Files are equal.')
+                        logFile.info('Files are equal.')
                         equal_files.append(snap_a[key])
                         # that means either hasn't change since last time
                         continue
@@ -445,9 +445,13 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                     # file in A newer than file in B -> check if files have indeed different content
                     if compare_binary(snap_a[key], snap_b[corresponding_file_in_b]):
                         # if content of files the same - time doesn't matter. Files are equal.
+                        print('Files are equal.')
+                        logFile.info('Files are equal.')
                         equal_files.append(snap_a[key])
                     else:
                         # files have different content - add them to list to be copied from A to B
+                        print('File in \'' + firstFolder + '\' is newer')
+                        logFile.info('File in \'' + firstFolder + '\' is newer')
                         to_be_updated_from_a_to_b.append([snap_a[key][1][0], snap_b[corresponding_file_in_b][1][0],
                                                           snap_a[key][2]])
                         # add to list another list with full paths of both files
@@ -456,9 +460,13 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                 elif which_file_is_newer == 'secondNewer':
                     if compare_binary(snap_a[key], snap_b[corresponding_file_in_b]):
                         # if content of files the same - time doesn't matter. Files are equal.
+                        print('Files are equal.')
+                        logFile.info('Files are equal.')
                         equal_files.append(snap_a[key])
                     else:
                         # file in A older than file in B -> add it to list to be copied from B to A
+                        print('File in \'' + secondFolder + '\' is newer')
+                        logFile.info('File in \'' + secondFolder + '\' is newer')
                         to_be_updated_from_b_to_a.append([snap_b[corresponding_file_in_b][1][0], snap_a[key][1][0],
                                                           snap_b[corresponding_file_in_b][2]])
                         # add to list another list with full paths of both files and size of file in B
@@ -466,21 +474,29 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                         size_from_b_to_a += snap_b[corresponding_file_in_b][2]
                 elif which_file_is_newer == 'equal':
                     if snap_a[key][2] == snap_b[corresponding_file_in_b][2]:
+                        print('Files are equal.')
+                        logFile.info('Files are equal.')
                         equal_files.append(snap_a[key])
                         # [2] - it is size. If mtime and size are equal - files are equal
                     else:
+                        print("You should check it manually.")
+                        logFile.info("You should check it manually.")
                         skipped_files.append(path_to_file_in_a_without_root)
                         # if mtime is equal, bit size is not - add it to list to tell to user to check manually
 
         else:
             # if file in first folder has not been found in the second folder
             if path_to_file_in_a_without_root in were_removed_from_b:
+                print('Will be removed from \'' + firstFolder + '\'')
+                logFile.info('Will be removed from \'' + firstFolder + '\'')
                 must_remove_from_a.append(snap_a[key])
                 if snap_a[key][0] == 'file':
                     size_to_remove_from_a += snap_a[key][2]
                 # if item was removed from B - add it to list of items which will be removed from A
                 continue
             else:
+                print('Doesn\'t exist in \'' + secondFolder + '\' and will be copied there.')
+                logFile.info('Doesn\'t exist in \'' + secondFolder + '\' and will be copied there.')
                 not_exist_in_b.append(snap_a[key])
                 # if file doesn't exist in B -> add it in list to be copied from A
                 number_to_transfer_from_a_to_b += 1
@@ -489,6 +505,7 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
 
     for key in snap_b.keys():
         # check which files from B exist in A
+
         if snap_b[key][0] == 'file':
             # count number of files in the first folder
             num_files_in_b += 1
@@ -498,33 +515,25 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
             num_folders_in_b += 1
 
         if not snap_b[key][1][3] in paths_of_snap_a:
+            print('Comparing files... \'' + snap_b[key][1][3] + '\'')
+            logFile.info('Comparing files... \'' + snap_b[key][1][3] + '\'')
             # if file was not found in first folder
             if snap_b[key][1][3] in were_removed_from_a:
                 # if item was removed from A - add it to list of items
                 # which will be removed from B
+                print('Will be removed from \'' + secondFolder + '\'')
+                logFile.info('Will be removed from \'' + secondFolder + '\'')
                 must_remove_from_b.append(snap_b[key])
                 if snap_b[key][0] == 'file':
                     size_to_remove_from_b += snap_b[key][2]
             else:
+                print('Doesn\'t exist in \'' + firstFolder + '\' and will be copied there.')
+                logFile.info('Doesn\'t exist in \'' + firstFolder + '\' and will be copied there.')
                 not_exist_in_a.append(snap_b[key])
                 # if file doesn't exists in A -> add it in list to be copied from B
                 number_to_transfer_from_b_to_a += 1
                 if snap_b[key][0] == 'file':
                     size_from_b_to_a += snap_b[key][2]
-
-    if len(not_exist_in_b) != len(new_in_a):
-        # should not happened but just in case
-        print('Warning! Number of new files in ' + first_folder + ' does not match number of absent items in ' +
-              second_folder)
-        logFile.warning('Warning! Number of new files in ' + first_folder +
-                        ' does not match number of absent items in ' + second_folder)
-
-    if len(not_exist_in_a) != len(new_in_b):
-        # should not happened but just in case
-        print('Warning! Number of new items in ' + second_folder + ' does not match number of absent items in ' +
-              first_folder)
-        logFile.warning('Warning! Number of new items in ' + second_folder +
-                        ' does not match number of absent items in ' + first_folder)
 
     '''result messages to console and log file'''
 
@@ -544,62 +553,39 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
 
     print(str(len(same_path_and_name)) + ' file(s) that are common for both folders.')
     logFile.info(str(len(same_path_and_name)) + ' file(s) that are common for both folders:')
-    for path in same_path_and_name:
-        logFile.info(path[1][0])
-    logFile.info('\n')
 
     print(str(len(equal_files)) + ' file(s) are equal.')
     logFile.info(str(len(equal_files)) + ' file(s) are equal.')
-    for path in equal_files:
-        logFile.info(path[1][0])
 
     if bothSynced:
         if len(not_exist_in_b) > 0:
-            print(str(len(not_exist_in_b)) + ' new item(s) in ' + first_folder)
-            logFile.info(str(len(not_exist_in_b)) + ' new item(s) in ' + first_folder + '\n')
-            for item in not_exist_in_b:
-                logFile.info(item)
-            logFile.info('\n')
+            print(str(len(not_exist_in_b)) + ' new item(s) in \'' + first_folder + '\'')
+            logFile.info(str(len(not_exist_in_b)) + ' new item(s) in \'' + first_folder + '\'\n')
 
         if len(not_exist_in_a) > 0:
-            print(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder)
-            logFile.info(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder)
-            for item in not_exist_in_a:
-                logFile.info(item)
-            logFile.info('\n')
+            print(str(len(not_exist_in_a)) + ' new item(s) in \'' + second_folder + '\'')
+            logFile.info(str(len(not_exist_in_a)) + ' new item(s) in ' + second_folder + '\'')
 
     else:
         if len(not_exist_in_b) > 0:
-            print(str(len(not_exist_in_b)) + ' item(s) from  ' + first_folder + ' don\'t exist in \'' +
+            print(str(len(not_exist_in_b)) + ' item(s) from  \'' + first_folder + '\' don\'t exist in \'' +
                   second_folder + '\'')
-            logFile.info(str(len(not_exist_in_b)) + ' item(s) from  ' + first_folder +
-                         ' don\'t exist in \'' + second_folder + '\'')
-            for path in not_exist_in_b:
-                logFile.info(path[1][0])
-            logFile.info('\n')
+            logFile.info(str(len(not_exist_in_b)) + ' item(s) from  \'' + first_folder +
+                         '\' don\'t exist in \'' + second_folder + '\'')
 
         if len(not_exist_in_a) > 0:
-            print(str(len(not_exist_in_a)) + ' item(s) from  ' + second_folder + ' don\'t exist in \'' +
+            print(str(len(not_exist_in_a)) + ' item(s) from  \'' + second_folder + '\' don\'t exist in \'' +
                   first_folder + '\'')
-            logFile.info(str(len(not_exist_in_a)) + ' item(s) from  ' +
-                         second_folder + ' don\'t exist in \'' + first_folder + '\'')
-            for path in not_exist_in_a:
-                logFile.info(path[1][0])
-            logFile.info('\n')
+            logFile.info(str(len(not_exist_in_a)) + ' item(s) from  \'' +
+                         second_folder + '\' don\'t exist in \'' + first_folder + '\'')
 
     if len(to_be_updated_from_a_to_b) > 0:
         print(str(len(to_be_updated_from_a_to_b)) + ' item(s) has newer version in \'' + first_folder + '\'')
         logFile.info(str(len(to_be_updated_from_a_to_b)) + ' item(s) has newer version in \'' + first_folder + '\'')
-        for path in to_be_updated_from_a_to_b:
-            logFile.info(path[0])
-        logFile.info('\n')
 
     if len(to_be_updated_from_b_to_a) > 0:
-        print(str(len(to_be_updated_from_b_to_a)) + ' item(s) has newer version in ' + second_folder + '\'')
-        logFile.info(str(len(to_be_updated_from_b_to_a)) + ' item(s) has newer version in ' + second_folder + '\'')
-        for path in to_be_updated_from_b_to_a:
-            logFile.info(path[0])
-        logFile.info('\n')
+        print(str(len(to_be_updated_from_b_to_a)) + ' item(s) has newer version in \'' + second_folder + '\'')
+        logFile.info(str(len(to_be_updated_from_b_to_a)) + ' item(s) has newer version in \'' + second_folder + '\'')
 
     if len(were_removed_from_a) > 0:
         print(str(len(were_removed_from_a)) + ' item(s) have been removed from \'' + first_folder + '\' since ' +
@@ -630,44 +616,44 @@ def snapshot_comparison(first_folder, second_folder, root_first_folder, root_sec
                 logFile.warning('- ' + file)
 
     if number_to_transfer_from_a_to_b > 0:
-        print('Number of item(s) to transfer from ' + first_folder + ' to ' + second_folder + ' is ' +
+        print('Number of item(s) to transfer from \'' + first_folder + '\' to \'' + second_folder + '\' is ' +
               str(number_to_transfer_from_a_to_b) + '.')
-        logFile.info('Number of item(s) to transfer from ' + first_folder + ' to ' + second_folder + ' is ' +
+        logFile.info('Number of item(s) to transfer from \'' + first_folder + '\' to \'' + second_folder + '\' is ' +
                      str(number_to_transfer_from_a_to_b) + '.\n')
 
-        print('Total size of file(s) to transfer from ' + first_folder + ' to ' + second_folder + ' is ' +
+        print('Total size of file(s) to transfer from \'' + first_folder + '\' to \'' + second_folder + '\' is ' +
               str("{0:.2f}".format(size_from_a_to_b / 1024**2)) + ' MB.')
-        logFile.info('Total size of file(s) to transfer from ' + first_folder + ' to ' + second_folder + ' is ' +
-                     str("{0:.2f}".format(size_from_a_to_b / 1024**2)) + ' MB.')
+        logFile.info('Total size of file(s) to transfer from \'' + first_folder + '\' to \'' +
+                     second_folder + '\' is ' + str("{0:.2f}".format(size_from_a_to_b / 1024**2)) + ' MB.')
 
     if number_to_transfer_from_b_to_a > 0:
-        print('Number item(s) to transfer from ' + second_folder + ' to ' + first_folder + ' is ' +
+        print('Number item(s) to transfer from \'' + second_folder + '\' to \'' + first_folder + '\' is \'' +
               str(number_to_transfer_from_b_to_a) + '.')
-        logFile.info('Number item(s) to transfer from ' + second_folder + ' to ' + first_folder + ' is ' +
+        logFile.info('Number item(s) to transfer from \'' + second_folder + '\' to \'' + first_folder + '\' is \'' +
                      str(number_to_transfer_from_b_to_a) + '.\n')
 
-        print('Total size of file(s) to transfer from ' + second_folder + ' to ' + first_folder + ' is ' +
+        print('Total size of file(s) to transfer from \'' + second_folder + '\' to \'' + first_folder + '\' is ' +
               str("{0:.2f}".format(size_from_b_to_a / 1024**2)) + ' MB.')
-        logFile.info('Total size of file(s) to transfer from ' + second_folder + ' to ' + first_folder + ' is ' +
-                     str("{0:.2f}".format(size_from_b_to_a / 1024**2)) + ' MB.')
+        logFile.info('Total size of file(s) to transfer from \'' + second_folder + '\' to \'' + first_folder +
+                     '\' is ' + str("{0:.2f}".format(size_from_b_to_a / 1024**2)) + ' MB.')
 
     if len(must_remove_from_a) > 0:
-        print('\nNumber of item(s) to remove from ' + first_folder + ' is ' + str(len(must_remove_from_a)) + '.')
-        logFile.info('\nTotal size of item(s) to remove from ' + first_folder + ' is ' +
+        print('\nNumber of item(s) to remove from \'' + first_folder + '\' is ' + str(len(must_remove_from_a)) + '.')
+        logFile.info('\nTotal size of item(s) to remove from \'' + first_folder + '\' is ' +
                      str(len(must_remove_from_a)) + '.')
-        print('Size of item(s) to remove from ' + first_folder + ' is ' +
+        print('Size of item(s) to remove from \'' + first_folder + '\' is ' +
               str("{0:.2f}".format(size_to_remove_from_a / 1024**2)) + ' MB.')
-        logFile.info('Size of item(s) to remove from ' + first_folder + ' is ' +
+        logFile.info('Size of item(s) to remove from \'' + first_folder + '\' is ' +
                      str("{0:.2f}".format(size_to_remove_from_a / 1024**2)) + ' MB.')
 
     if len(must_remove_from_b) > 0:
-        print('Number of item(s) to remove from ' + second_folder + ' is ' + str(len(must_remove_from_b)) + '.')
-        logFile.info('Total size of item(s) to remove from ' + second_folder + ' is ' +
+        print('Number of item(s) to remove from \'' + second_folder + '\' is ' + str(len(must_remove_from_b)) + '.')
+        logFile.info('Total size of item(s) to remove from \'' + second_folder + '\' is ' +
                      str(len(must_remove_from_b)) + '.')
 
-        print('Size of item(s) to remove from ' + second_folder + ' is ' +
+        print('Size of item(s) to remove from \'' + second_folder + '\' is ' +
               str("{0:.2f}".format(size_to_remove_from_b / 1024**2)) + ' MB.')
-        logFile.info('Size of item(s) to remove from ' + second_folder + ' is ' +
+        logFile.info('Size of item(s) to remove from \'' + second_folder + '\' is ' +
                      str("{0:.2f}".format(size_to_remove_from_b / 1024**2)) + ' MB.')
 
     print('--- {0:.3f} --- seconds\n'.format(time.time() - start_time))
@@ -739,10 +725,11 @@ def sync_files(compare_result, first_folder, second_folder):
 
                 logFile.error(traceback.format_exc())
                 # write error traceback to logFile
-                print(file_to_delete + ' has been opened in another app. Close all apps that can use this file and '
-                                       'try again.')
-                logFile.warning(file_to_delete + ' has been opened in another app. Close all apps that can use '
-                                                 'this file and try again.')
+                print('\'' + file_to_delete +
+                      '\' has been opened in another app. Close all apps that can use this file and try again.')
+                logFile.warning('\'' + file_to_delete +
+                                '\' has been opened in another app. Close all apps that can use this file and try' +
+                                'again.')
                 user_decision = input('Try again? y/n: ').lower()
                 if user_decision == 'n':
                     return False
@@ -784,8 +771,8 @@ def sync_files(compare_result, first_folder, second_folder):
                     continue
             else:
                 # item was removed with its folder before
-                print(full_path + ' was removed.')
-                logFile.info(full_path + ' was removed.')
+                print('\'' + full_path + '\' was removed.')
+                logFile.info('\'' + full_path + '\' was removed.')
                 were_removed += 1
 
             if items_to_remove[item][0] == 'file' and remove_state:
@@ -809,29 +796,29 @@ def sync_files(compare_result, first_folder, second_folder):
                 os.mkdir(full_path_item_that_not_exits_yet)
                 # create empty folder instead of copying full directory
                 were_created += 1
-                print('- ' + full_path_item_that_not_exits_yet + ' was created.')
-                logFile.info('- ' + full_path_item_that_not_exits_yet + ' was created.')
+                print('- \'' + full_path_item_that_not_exits_yet + '\' was created.')
+                logFile.info('- \'' + full_path_item_that_not_exits_yet + '\' was created.')
 
             elif file[0] == 'file':
                 if os.path.exists(full_path_item_that_not_exits_yet):
                     # it shouldn't happened, but just in case
-                    logConsole.warning('WARNING: ' + full_path_item_that_not_exits_yet + ' already exists!')
-                    logFile.warning('WARNING: ' + full_path_item_that_not_exits_yet + ' already exists!')
+                    logConsole.warning('WARNING: \'' + full_path_item_that_not_exits_yet + '\' already exists!')
+                    logFile.warning('WARNING: \'' + full_path_item_that_not_exits_yet + '\' already exists!')
                     continue
                 else:
-                    print(' - ' + file[1][3] + ' is copying...')
-                    logFile.info(' - ' + file[1][3] + ' is copying...')
+                    print('- \'' + file[1][3] + '\' is copying...')
+                    logFile.info('- \'' + file[1][3] + '\' is copying...')
                     if file[2] > 1024**3:
-                        print(file[1][3] + ' is heavy. Please be patient.')
-                        logFile.info(file[1][3] + ' is heavy. Please be patient...')
+                        print('\'' + file[1][3] + '\' is heavy. Please be patient.')
+                        logFile.info('\'' + file[1][3] + '\' is heavy. Please be patient...')
 
                     shutil.copy2(full_path_item_in_this_folder,
                                  check_longevity_of_path(full_path_item_that_not_exits_yet))
                     # copy file
                     were_copied += 1
                     total_size_copied_updated += file[2]
-                    print('- ' + os.path.basename(full_path_item_that_not_exits_yet + ' was copied.'))
-                    logFile.info('- ' + os.path.basename(full_path_item_that_not_exits_yet + ' was copied.'))
+                    print('- ' + os.path.basename('\'' + full_path_item_that_not_exits_yet + '\' was copied.'))
+                    logFile.info('- ' + os.path.basename('\'' + full_path_item_that_not_exits_yet + '\' was copied.'))
 
     def update_files(to_be_updated):
         # recursively update files by deleting old one and copying new one instead of it
@@ -844,22 +831,22 @@ def sync_files(compare_result, first_folder, second_folder):
             if os.path.exists(array[0]) and os.path.exists(array[1]):
                 if delete(array[1]):
                     shutil.copy2(array[0], array[1])
-                    print('- ' + array[1] + ' was updated.')
-                    logFile.info('- ' + array[1] + ' was updated.')
+                    print('- \'' + array[1] + '\' was updated.')
+                    logFile.info('- \'' + array[1] + '\' was updated.')
                     total_size_copied_updated += array[2]
                     were_updated += 1
                 else:
-                    print(array[1] + ' was not updated.')
-                    logFile.warning(array[1] + ' was not updated.')
+                    print('\'' + array[1] + '\' was not updated.')
+                    logFile.warning('\'' + array[1] + '\' was not updated.')
                     # Script will try to updated it next time, there is nothing to be worried about
                     continue
 
             elif not os.path.exists(array[0]):
-                print(array[0] + ' hasn\'t been found! Can\'t handle it.')
-                logFile.warning(array[0] + ' hasn\'t been found! Can\'t handle it.')
+                print('\'' + array[0] + '\' hasn\'t been found! Can\'t handle it.')
+                logFile.warning('\'' + array[0] + '\' hasn\'t been found! Can\'t handle it.')
             elif not os.path.exists(array[1]):
-                print(array[1] + ' hasn\'t been found! Can\'t handle it.')
-                logFile.warning(array[1] + ' hasn\'t been found! Can\'t handle it.')
+                print('\'' + array[1] + '\' hasn\'t been found! Can\'t handle it.')
+                logFile.warning('\'' + array[1] + '\' hasn\'t been found! Can\'t handle it.')
 
     if len(to_be_updated_from_a_to_b) > 0:
         update_files(to_be_updated_from_a_to_b)
@@ -966,7 +953,7 @@ def menu_before_sync():
             continue
 
 
-compareResult = snapshot_comparison(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder)
+compareResult = compare_snapshot(firstFolder, secondFolder, rootFirstFolder, rootSecondFolder)
 # start to compare folders that user has chosen
 
 if compareResult[6] > 0:
