@@ -86,25 +86,31 @@ def clean_log_folder(max_size):
         for root, subfolders, logfiles in os.walk('log'):
             for logfile in logfiles:
                 path_to_logfile = os.path.join(os.getcwd(), root, logfile)
-                logfile_list.append([path_to_logfile, os.path.getctime(path_to_logfile)])
-                total_size += os.path.getsize(path_to_logfile)
+                size_of_log = os.path.getsize(path_to_logfile)
+                logfile_list.append([path_to_logfile, os.path.getctime(path_to_logfile), size_of_log])
+                total_size += size_of_log
 
         logFile.info('There is {0:.02f} MB of logs.\n'.format(total_size / 1024**2))
 
         return total_size
 
-    while check_logs_size() > max_size * 1024**2:
+    total_log_size = check_logs_size()
+
+    while total_log_size > max_size * 1024**2:
         # if log files weighs more than max_size megabytes - recursively remove oldest ones one by one
         logfile_to_delete = ''
         earliest = time.time()
-        for file, creation_time in logfile_list:
-            if creation_time < earliest:
-                earliest = creation_time
-                logfile_to_delete = file
+        for index, val in enumerate(logfile_list):
+            if val[1] < earliest:
+                earliest = val[1]
+                logfile_to_delete = val[0]
+                index_to_remove = index
+                # print(logfile_list[index_to_remove])
         logFile.info('Removing old log file: ' + logfile_to_delete)
         send2trash.send2trash(logfile_to_delete)
-        del logfile_list[:]
-        # erase list of files otherwise script tries to remove already removed files
+        total_log_size -= logfile_list[index_to_remove][2]
+        logfile_list.pop(index_to_remove)
+        # remove item from file information from list and subtract it's size from total size
 
 
 def choose_folder():
@@ -623,9 +629,9 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
                      second_folder + '\' is ' + str("{0:.2f}".format(size_from_a_to_b / 1024**2)) + ' MB.')
 
     if number_to_transfer_from_b_to_a > 0:
-        print('Number items to transfer from \'' + second_folder + '\' to \'' + first_folder + '\' is \'' +
+        print('Number items to transfer from \'' + second_folder + '\' to \'' + first_folder + '\' is ' +
               str(number_to_transfer_from_b_to_a) + '.')
-        logFile.info('Number items to transfer from \'' + second_folder + '\' to \'' + first_folder + '\' is \'' +
+        logFile.info('Number items to transfer from \'' + second_folder + '\' to \'' + first_folder + '\' is ' +
                      str(number_to_transfer_from_b_to_a) + '.\n')
 
         print('Total size of file(s) to transfer from \'' + second_folder + '\' to \'' + first_folder + '\' is ' +
@@ -753,12 +759,12 @@ def sync_files(compare_result, first_folder, second_folder):
             full_path = items_to_remove[item][1][0]
             if os.path.exists(full_path):
                 if delete(full_path):
-                    print('\'' + full_path + ' was removed.')
-                    logFile.info('\'' + full_path + ' was removed.')
+                    print('\'' + full_path + '\' was removed.')
+                    logFile.info('\'' + full_path + '\' was removed.')
                     were_removed += 1
                 else:
-                    print('\'' + full_path + ' was not removed.')
-                    logFile.warning('\'' + full_path + ' was not removed.')
+                    print('\'' + full_path + '\' was not removed.')
+                    logFile.warning('\'' + full_path + '\' was not removed.')
                     if folder == 'first':
                         remove_from_b_next_time.append(items_to_remove[item])
                     elif folder == 'second':
@@ -901,7 +907,7 @@ print('Hello. This is folderSync.py written by Aleksandr Mikheev.\n'
 logFile.info('Hello. This is folderSync.py written by Aleksandr Mikheev.\n'
              'It is a program that can sync all files and folders between two chosen directories (for Windows).\n')
 
-clean_log_folder(20)
+clean_log_folder(50)
 # argument is max size of folder with logs in megabytes
 # if there are more than that - remove oldest logs
 
