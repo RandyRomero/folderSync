@@ -10,7 +10,6 @@
 # For file comparison it uses timestamps, size of file and binary comparison - depend on a situation.
 # Script also write logs to .\log folder and clear the oldest, when size of loge folder is more than 20 Mb.
 
-import datetime
 import math
 import os
 import re
@@ -20,56 +19,13 @@ import shelve
 import sys
 import time
 import traceback
-import set_loggers
+import handle_logs
 
 firstFolder = ''
 secondFolder = ''
 remove_from_a_next_time = []
 remove_from_b_next_time = []
-logFile, logConsole = set_loggers.set_loggers()
-
-
-def clean_log_folder(max_size):
-    # clean log files from log folder when their total size is more than max_size
-
-    logfile_list = []
-
-    def check_logs_size():
-        # count size of all logs and create a list of logs
-        nonlocal logfile_list
-        total_size = 0
-
-        for root, subfolders, logfiles in os.walk('log'):
-            for logfile in logfiles:
-                path_to_logfile = os.path.join(os.getcwd(), root, logfile)
-                size_of_log = os.path.getsize(path_to_logfile)
-                logfile_list.append([path_to_logfile, os.path.getctime(path_to_logfile), size_of_log])
-                total_size += size_of_log
-
-        logFile.info('There is {0:.02f} MB of logs.\n'.format(total_size / 1024**2))
-
-        return total_size
-
-    total_log_size = check_logs_size()
-
-    while total_log_size > max_size * 1024**2:
-        # if log files weighs more than max_size megabytes - recursively remove oldest ones one by one
-        logfile_to_delete = ''
-        earliest = time.time()
-        for index, val in enumerate(logfile_list):
-            if val[1] < earliest:
-                earliest = val[1]
-                logfile_to_delete = val[0]
-                index_to_remove = index
-                # print(logfile_list[index_to_remove])
-        logFile.info('Removing old log file: ' + logfile_to_delete + ', ' +
-                     str(datetime.datetime.fromtimestamp(earliest)))
-        logConsole.debug('Removing old log file: ' + logfile_to_delete + ', ' +
-                         str(datetime.datetime.fromtimestamp(earliest)))
-        send2trash.send2trash(logfile_to_delete)
-        total_log_size -= logfile_list[index_to_remove][2]
-        logfile_list.pop(index_to_remove)
-        # remove item from file information from list and subtract it's size from total size
+logFile, logConsole = handle_logs.set_loggers()
 
 
 def choose_folder():
@@ -183,7 +139,7 @@ def get_snapshot(path_to_root_folder, root_folder):
     return current_snapshot
 
 
-def get_changes_between_states_of_folders(path_to_folder, root_of_path):
+def get_changes_between_folder_states(path_to_folder, root_of_path):
     # Compare folder's snapshot that was stored in .folderSyncSnapshot
     # folder during last syncing with fresh snapshot that is going to be taken within this function.
     # It needs to figure out which files were removed in order not to acquire it from not yet updated folder again
@@ -310,13 +266,13 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
 
     if firstFolderSynced:
         were_removed_from_a, new_in_a, updated_items_a, snap_a, store_date_a = \
-            get_changes_between_states_of_folders(first_folder, root_first_folder)
+            get_changes_between_folder_states(first_folder, root_first_folder)
     else:
         snap_a = get_snapshot(first_folder, root_first_folder)
 
     if secondFolderSynced:
         were_removed_from_b, new_in_b, updated_items_b, snap_b, store_date_b = \
-            get_changes_between_states_of_folders(second_folder, root_second_folder)
+            get_changes_between_folder_states(second_folder, root_second_folder)
     else:
         snap_b = get_snapshot(second_folder, root_second_folder)
 
@@ -866,7 +822,7 @@ print('Hello. This is folderSync.py written by Aleksandr Mikheev.\n'
 logFile.info('Hello. This is folderSync.py written by Aleksandr Mikheev.\n'
              'It is a program that can sync all files and folders between two chosen directories (for Windows).\n')
 
-clean_log_folder(20)
+handle_logs.clean_log_folder(20, logFile, logConsole)
 # argument is max size of folder with logs in megabytes
 # if there are more than that - remove oldest logs
 
