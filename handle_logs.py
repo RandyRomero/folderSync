@@ -22,7 +22,7 @@ def set_loggers():
     new_log_name = os.path.join('log', 'log_' + timestr + '.txt')
 
     if os.path.exists('.\log'):
-        ''' create new log every time when script starts instead of writing in the same file '''
+        # create new log every time when script starts instead of writing in the same file 
 
         if os.path.exists(new_log_name):
             i = 2
@@ -81,7 +81,6 @@ def clean_log_folder(max_size, log_file, log_console):
                 earliest = val[1]
                 logfile_to_delete = val[0]
                 index_to_remove = index
-                # print(logfile_list[index_to_remove])
         log_file.info('Removing old log file: ' + logfile_to_delete + ', ' +
                       str(datetime.datetime.fromtimestamp(earliest)))
         log_console.debug('Removing old log file: ' + logfile_to_delete + ', ' +
