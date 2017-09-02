@@ -11,6 +11,7 @@
 # Script also write logs to .\log folder and clear the oldest, when size of loge folder is more than 20 Mb.
 
 import logging
+import datetime
 import math
 import os
 import re
@@ -48,10 +49,10 @@ def set_loggers():
 
         if os.path.exists(new_log_name):
             i = 2
-            while os.path.exists(os.path.join('log', 'log ' + timestr + '(' + str(i) + ').txt')):
+            while os.path.exists(os.path.join('log', 'log_' + timestr + '(' + str(i) + ').txt')):
                 i += 1
                 continue
-            file_handler = logging.FileHandler(os.path.join('log', 'log ' + timestr + '(' +
+            file_handler = logging.FileHandler(os.path.join('log', 'log_' + timestr + '(' +
                                                             str(i) + ').txt'), encoding='utf8')
         else:
             file_handler = logging.FileHandler(new_log_name, encoding='utf8')
@@ -106,7 +107,10 @@ def clean_log_folder(max_size):
                 logfile_to_delete = val[0]
                 index_to_remove = index
                 # print(logfile_list[index_to_remove])
-        logFile.info('Removing old log file: ' + logfile_to_delete)
+        logFile.info('Removing old log file: ' + logfile_to_delete + ', ' +
+                     str(datetime.datetime.fromtimestamp(earliest)))
+        logConsole.debug('Removing old log file: ' + logfile_to_delete + ', ' +
+                         str(datetime.datetime.fromtimestamp(earliest)))
         send2trash.send2trash(logfile_to_delete)
         total_log_size -= logfile_list[index_to_remove][2]
         logfile_list.pop(index_to_remove)
@@ -907,7 +911,7 @@ print('Hello. This is folderSync.py written by Aleksandr Mikheev.\n'
 logFile.info('Hello. This is folderSync.py written by Aleksandr Mikheev.\n'
              'It is a program that can sync all files and folders between two chosen directories (for Windows).\n')
 
-clean_log_folder(50)
+clean_log_folder(20)
 # argument is max size of folder with logs in megabytes
 # if there are more than that - remove oldest logs
 
