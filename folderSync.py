@@ -4,11 +4,12 @@
 # Dedicated for Windows.
 # Purpose of that script is to make exact duplicates of two folders.
 # For example, you can back up and update your backups with this script.
-# During first sync script assumes all files that do not exist in one folder as new for second folder and vice versa.
-# During second and other sync script can delete files from folder if they were deleted in the other.
+# During first sync script assumes all files that do not exist in one folder are new for the
+# second folder and vice versa.
+# During second and other sync script can delete files from folder if they were deleted in the other one.
 # It can also detected updated files.
 # For file comparison it uses timestamps, size of file and binary comparison - depend on a situation.
-# Script also write logs to .\log folder and clear the oldest, when size of loge folder is more than 20 Mb.
+# Script also write logs to .\log folder and clear the oldest ones, when size of logs folder is more than 20 Mb.
 
 import math
 import os
