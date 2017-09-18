@@ -675,19 +675,20 @@ def sync_files(compare_result, first_folder, second_folder):
             if items_to_remove[item][0] == 'file' and remove_state:  # count size of removed files
                 total_size_removed += items_to_remove[item][2]
 
-    def copy_items(not_exist_items, path_to_root):  # Copy files that don't exist in one of folders
+    def copy_items(items_to_copy, path_to_root):  # Copy files that don't exist in one of folders
 
         # in order to use a variable from nearest outer scope
         nonlocal were_copied
         nonlocal were_created
         nonlocal total_size_copied_updated
 
-        for item in not_exist_items:
+        for item in items_to_copy:
 
-            # path of file in 2nd folder from without root folder and all the other previous folders
+            # create path where copy items to
             path_without_root = item[1][3]
-            full_path_item_in_this_folder = item[1][0]  # full path of item in 2nd folder
-            full_path_item_that_not_exits_yet = os.path.join(path_to_root, path_without_root)  # path where copy item to
+            full_path_item_in_this_folder = item[1][0]  # full path of item
+            full_path_item_that_not_exits_yet = os.path.join(path_to_root, path_without_root)
+
             if item[0] == 'folder':
                 os.mkdir(full_path_item_that_not_exits_yet)  # create empty folder instead of copying full directory
                 were_created += 1
@@ -700,11 +701,11 @@ def sync_files(compare_result, first_folder, second_folder):
                     logFile.warning('WARNING: \'' + full_path_item_that_not_exits_yet + '\' already exists!')
                     continue
                 else:
-                    print('\'' + item[1][3] + '\' is copying...')
-                    logFile.info('\'' + item[1][3] + '\' is copying...')
+                    print('\'' + item[1][0] + '\' is copying to \'' + full_path_item_that_not_exits_yet + '\'...')
+                    logFile.info('\'' + item[1][0] + '\' is copying to ' + full_path_item_that_not_exits_yet + '\'...')
                     if item[2] > 1024**3:  # if size of file more than 1 Gb
-                        print('\'' + item[1][3] + '\' is heavy. Please be patient.')
-                        logFile.info('\'' + item[1][3] + '\' is heavy. Please be patient...')
+                        print('\'' + item[1][0] + '\' is heavy. Please be patient.')
+                        logFile.info('\'' + item[1][0] + '\' is heavy. Please be patient...')
 
                     # copy file
                     shutil.copy2(full_path_item_in_this_folder,
