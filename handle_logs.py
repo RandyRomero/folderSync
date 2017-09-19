@@ -3,6 +3,7 @@ import os
 import time
 import send2trash
 import datetime
+import re
 
 
 def set_loggers():
@@ -46,18 +47,28 @@ def set_loggers():
 
 
 def clean_log_folder(max_size, log_file, log_console):
-    # clean log files from log folder when their total size is more than max_size
+    # Remove oldest log files from log folder when size of folder is more than max_size.
+
+    # Script take creation time of file not from its properties (get.cwd()),
+    # but from it's name, because you cannot rely on properties in case if log file was copied by
+    # for example Yandex.Disk, because then creation time is time of copying this file from another machine
+
     logfile_list = []
 
     def check_logs_size():  # count size of all already existing logs and create a list of them
         nonlocal logfile_list
         total_size = 0
 
-        for root, subfolders, logfiles in os.walk('log'):
+        for root, subfolders, logfiles in os.walk('log'):  # Get name and creation time of every logfile
             for logfile in logfiles:
-                path_to_logfile = os.path.join(os.getcwd(), root, logfile)
+                # Get date and time as a string from file name
+                date_from_filename = re.search(r'(\d{4}-\d{2}-\d{2}__\d{2}h\d{2}m)', logfile).group()
+                # Covert string with date and time to timestamp
+                creation_time = datetime.datetime.strptime(date_from_filename, '%Y-%m-%d__%Hh%Mm')
+
+                path_to_logfile = os.path.join(root, logfile)
                 size_of_log = os.path.getsize(path_to_logfile)
-                logfile_list.append([path_to_logfile, os.path.getctime(path_to_logfile), size_of_log])
+                logfile_list.append([path_to_logfile, creation_time, size_of_log])
                 total_size += size_of_log
 
         log_file.info('There is {0:.02f} MB of logs.\n'.format(total_size / 1024**2))
@@ -78,8 +89,7 @@ def clean_log_folder(max_size, log_file, log_console):
                 index_to_remove = index
         log_file.info('Removing old log file: ' + logfile_to_delete + ', ' +
                       str(datetime.datetime.fromtimestamp(oldest)))
-        log_console.debug('Removing old log file: ' + logfile_to_delete + ', ' +
-                          str(datetime.datetime.fromtimestamp(oldest)))
+
         send2trash.send2trash(logfile_to_delete)
         # remove item from from list and subtract it's size from total size
         total_log_size -= logfile_list[index_to_remove][2]
