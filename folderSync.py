@@ -11,6 +11,9 @@
 # For file comparison it uses timestamps, size of file and binary comparison - depend on a situation.
 # Script also write logs to .\log folder and clear the oldest ones, when size of logs folder is more than 20 Mb.
 
+# Written by Aleksandr Mikheev
+# https://github.com/RandyRomero/folderSync
+
 import math
 import os
 import re
