@@ -743,6 +743,12 @@ def sync_files(compare_result, first_folder, second_folder):
                 print('\'' + array[1] + '\' hasn\'t been found! Can\'t handle it.')
                 logFile.warning('\'' + array[1] + '\' hasn\'t been found! Can\'t handle it.')
 
+    if len(remove_from_a) > 0:
+        remove_items(remove_from_a, 'first')
+
+    if len(remove_from_b) > 0:
+        remove_items(remove_from_b, 'second')
+
     if len(to_be_updated_from_a_to_b) > 0:
         update_files(to_be_updated_from_a_to_b)
 
@@ -754,12 +760,6 @@ def sync_files(compare_result, first_folder, second_folder):
 
     if len(not_exist_in_b) > 0:
         copy_items(not_exist_in_b, second_folder)
-
-    if len(remove_from_a) > 0:
-        remove_items(remove_from_a, 'first')
-
-    if len(remove_from_b) > 0:
-        remove_items(remove_from_b, 'second')
 
     if were_created > 0:
         print('\n' + str(were_created) + ' folders were created.')
