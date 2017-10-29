@@ -1,3 +1,27 @@
+#!python3
+# -*- coding: utf-8 -*-
+
+# Written by Aleksandr Mikheev a.k.a Randy Romero
+# https://github.com/RandyRomero
+
+# This is module that sets two loggers for you script
+# lofFile logger - to log into txt file in folder inside root folder of your script
+# logConsole - to log into console
+
+# In order to use it in you script you need import 'handle_logs'
+# and set loggers inside you script something like this:
+# logFile, logConsole = handle_logs.set_loggers()
+# Then when you want to log something in file you type for example:
+# logFile.debug('You debugging message')
+# or
+# logFile.info('User went crazy!')
+
+# This module can also clean up log folder when it is too large
+# Put in your script 'handle_logs.clean_log_folder(size, logFile, logConsole)'
+# where size is integer that represents maximum size in megabytes that
+# triggers removing the oldest log files
+# and where logFile and logConsole are names of loggers
+
 import logging
 import os
 import time
