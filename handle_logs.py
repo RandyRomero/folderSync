@@ -2,7 +2,7 @@ import logging
 import os
 import time
 import send2trash
-import datetime
+from datetime import datetime
 import re
 
 
@@ -64,8 +64,8 @@ def clean_log_folder(max_size, log_file, log_console):
                 # Get date and time as a string from file name
                 date_from_filename = re.search(r'(\d{4}-\d{2}-\d{2}__\d{2}h\d{2}m)', logfile).group()
                 # Covert string with date and time to timestamp
-                creation_time = datetime.datetime.strptime(date_from_filename, '%Y-%m-%d__%Hh%Mm')
-
+                creation_time = time.mktime(datetime.strptime(date_from_filename, '%Y-%m-%d__%Hh%Mm').timetuple())
+                # creation_time = time.mktime(creation_time.timetuple())
                 path_to_logfile = os.path.join(root, logfile)
                 size_of_log = os.path.getsize(path_to_logfile)
                 logfile_list.append([path_to_logfile, creation_time, size_of_log])
@@ -88,7 +88,7 @@ def clean_log_folder(max_size, log_file, log_console):
                 logfile_to_delete = val[0]
                 index_to_remove = index
         log_file.info('Removing old log file: ' + logfile_to_delete + ', ' +
-                      str(datetime.datetime.fromtimestamp(oldest)))
+                      str(datetime.fromtimestamp(oldest)))
 
         send2trash.send2trash(logfile_to_delete)
         # remove item from from list and subtract it's size from total size
