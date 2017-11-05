@@ -24,6 +24,7 @@ import sys
 import time
 import traceback
 import handle_logs
+import traceback
 
 firstFolder = ''
 secondFolder = ''
@@ -151,10 +152,20 @@ def get_changes_between_folder_states(path_to_folder, root_of_path):
         shel_file = shelve.open(os.path.join(path_to_folder, '.folderSyncSnapshot', 'snapshot'))
     except:
         print('Can\'t open stored snapshot. Exit.')
-        sys.exit()
+        logFile.error(traceback.format_exc())
+        return -1
 
     current_folder_snapshot = get_snapshot(path_to_folder, root_of_path)  # make currant snapshot of the given folder
-    previous_snapshot = shel_file['snapshot']  # load previous snapshot
+    try:
+        previous_snapshot = shel_file['snapshot']  # load previous snapshot
+    except KeyError:
+        print('Error: Unfortunately, database with previous state of folder is corrupted.\n'
+              'Program will assume that folder has never been synchronized before.')
+        logFile.error('Error: Unfortunately, database with previous state of folder is corrupted.\n'
+                      'Program will assume that folder has never been synchronized before.')
+        logFile.error(traceback.format_exc())
+        return -1
+
     store_date = shel_file['date']  # load date when previous snapshot has been done
 
     if shel_file['to_remove_from_a'][0] == root_of_path:
@@ -253,7 +264,7 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
     were_removed_from_a = []  # File that were removed from 1st folder since last sync
     were_removed_from_b = []  # Ditto for second folder
 
-    if firstFolderSynced:
+    if firstFolderSynced and get_changes_between_folder_states(first_folder, root_first_folder) != -1:
         # If 1st folder have been synced before, compare it's current and previous snapshot and get changes
         were_removed_from_a, new_in_a, updated_items_a, snap_a, store_date_a = \
             get_changes_between_folder_states(first_folder, root_first_folder)
@@ -261,7 +272,7 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
         # Load current state of folder (path to every ite inside with size and modification time)
         snap_a = get_snapshot(first_folder, root_first_folder)
 
-    if secondFolderSynced:
+    if secondFolderSynced and get_changes_between_folder_states(second_folder, root_second_folder) != -1:
         were_removed_from_b, new_in_b, updated_items_b, snap_b, store_date_b = \
             get_changes_between_folder_states(second_folder, root_second_folder)
     else:
