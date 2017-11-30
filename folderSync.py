@@ -530,16 +530,53 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
                 print('- ' + file)
                 logFile.warning('- ' + file)
 
+    def reset_list(list_of_files, path_from, path_to):
+        # Reset list of files if needed
+        while True:
+            question = 'Do you want to RESET the list of files to be copied from {} ' \
+                       'to {}? y/n: '.format(path_from, path_to)
+            reset_list_or_not = input(question)
+            logFile.info(question + '\n')
+            if reset_list_or_not.lower() == 'y':
+                list_of_files = []
+                if len(list_of_files) == 0:
+                    print('The list of files to be copied from {} to {} was cleared.'.format(path_from, path_to))
+                    logFile.info('The list of files to be copied from {} to {} was cleared.'.format(path_from, path_to))
+                    return True
+            elif reset_list_or_not.lower() == 'n':
+                return False
+            else:
+                print('It is wrong input, try again.')
+                logFile.info('It is wrong input, try again.\n')
+
+    def print_files_to_be_copied(list_of_files, path_from, path_to):
+        # Show list of files to be copied if needed
+        while True:
+            question = 'Do you want to SEE the list of files to be copied from {} ' \
+                       'to {}? y/n: '.format(path_from, path_to)
+            see_list = input(question)
+            logFile.info(question + '\n')
+            if see_list.lower() == 'y':
+                for item in list_of_files:
+                    print(item[1][0])
+                break
+            elif see_list.lower() == 'n':
+                break
+            else:
+                print('It is wrong input, try again.')
+                logFile.info('It is wrong input, try again.\n')
+
     if number_to_transfer_from_a_to_b > 0:
         print('Number of items to transfer from \'' + first_folder + '\' to \'' + second_folder + '\' is ' +
               str(number_to_transfer_from_a_to_b) + '.')
         logFile.info('Number of items to transfer from \'' + first_folder + '\' to \'' + second_folder + '\' is ' +
                      str(number_to_transfer_from_a_to_b) + '.\n')
-
-        print('Total size of files to transfer from \'' + first_folder + '\' to \'' + second_folder + '\' is ' +
-              str("{0:.2f}".format(size_from_a_to_b / 1024**2)) + ' MB.')
-        logFile.info('Total size of files to transfer from \'' + first_folder + '\' to \'' +
-                     second_folder + '\' is ' + str("{0:.2f}".format(size_from_a_to_b / 1024**2)) + ' MB.')
+        print_files_to_be_copied(not_exist_in_b, first_folder, second_folder)
+        if not reset_list(not_exist_in_b, first_folder, second_folder):
+            print('Total size of files to transfer from \'' + first_folder + '\' to \'' + second_folder + '\' is ' +
+                  str("{0:.2f}".format(size_from_a_to_b / 1024**2)) + ' MB.')
+            logFile.info('Total size of files to transfer from \'' + first_folder + '\' to \'' +
+                         second_folder + '\' is ' + str("{0:.2f}".format(size_from_a_to_b / 1024**2)) + ' MB.')
 
     if number_to_transfer_from_b_to_a > 0:
         print('Number items to transfer from \'' + second_folder + '\' to \'' + first_folder + '\' is ' +
@@ -547,9 +584,11 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
         logFile.info('Number items to transfer from \'' + second_folder + '\' to \'' + first_folder + '\' is ' +
                      str(number_to_transfer_from_b_to_a) + '.\n')
 
-        print('Total size of file(s) to transfer from \'' + second_folder + '\' to \'' + first_folder + '\' is ' +
-              str("{0:.2f}".format(size_from_b_to_a / 1024**2)) + ' MB.')
-        logFile.info('Total size of file(s) to transfer from \'' + second_folder + '\' to \'' + first_folder +
+        print_files_to_be_copied(not_exist_in_a, second_folder, first_folder)
+        if not reset_list(not_exist_in_a, second_folder, first_folder):
+            print('Total size of file(s) to transfer from \'' + second_folder + '\' to \'' + first_folder + '\' is ' +
+                  str("{0:.2f}".format(size_from_b_to_a / 1024**2)) + ' MB.')
+            logFile.info('Total size of file(s) to transfer from \'' + second_folder + '\' to \'' + first_folder +
                      '\' is ' + str("{0:.2f}".format(size_from_b_to_a / 1024**2)) + ' MB.')
 
     if len(must_remove_from_a) > 0:
