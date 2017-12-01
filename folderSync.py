@@ -535,29 +535,38 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
     print('--- {0:.3f} --- seconds\n'.format(time.time() - start_time))
     logFile.info('--- {0:.3f} --- seconds'.format(time.time() - start_time) + '\n')
 
-    def reset_list(operation, list_of_files, path_from, path_to):
-        # Reset list of files if needed
+    def copy_not_delete(list_of_files, path_from, path_to, list_to_copy):
+        while True:
+            question = 'Would you like to copy these files from {0} to {1} instead of deleting from {0} ? y/n: '\
+                .format(path_from, path_to)
+            copy_list_or_not = input(question)
+            logFile.info(question + '\n')
+            if copy_list_or_not.lower() == 'y':
+                list_to_copy += list_of_files
+                list_of_files[:] = []
+                return True
+            elif copy_list_or_not.lower() == 'n':
+                list_of_files[:] = []
+                message1 = 'The list of files to be deleted was cleared.'
+                print(message1)
+                return False
+            else:
+                print('It is wrong input, try again.')
+                logFile.info('It is wrong input, try again.\n')
+
+    def reset_list(operation, path_from, path_to):
+        # Menu that ask user whether he sure or not about deleting files
         while True:
             if operation != 'deleted':
                 question = 'Do you want to RESET the list of files to be {} from {} ' \
                            'to {}? y/n: '.format(operation, path_from, path_to)
             else:
-                question = 'Do you want to RESET the list of files to be {}? y/n: '.format(operation)
-            reset_list_or_not = input(question)
+                question = 'Are you sure you want delete these files? y/n: '
+            sure_or_not = input(question)
             logFile.info(question + '\n')
-            if reset_list_or_not.lower() == 'y':
-                list_of_files[:] = []
-                if len(list_of_files) == 0:
-                    if operation != 'deleted':
-                        message1 = 'The list of files to be {} from {} to {} was cleared.'.format(operation, path_from,
-                                                                                                  path_to)
-                    else:
-                        message1 = 'The list of files to be {} was cleared.'.format(operation)
-
-                    print(message1)
-                    logFile.info(message1)
-                    return True
-            elif reset_list_or_not.lower() == 'n':
+            if sure_or_not.lower() == 'n':
+                return True
+            elif sure_or_not.lower() == 'y':
                 return False
             else:
                 print('It is wrong input, try again.')
@@ -593,12 +602,12 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
 
         if len(files_to_copy) > 0:
             print_files_to_be_managed('copied', files_to_copy, path_from, path_to)
-            if reset_list('copied', files_to_copy, path_from, path_to):
+            if reset_list('copied', path_from, path_to):
                 size_to_copy = 0  # Reset size of files to be copied if list of files to be copied was cleared
 
         if len(files_to_update) > 0:
             print_files_to_be_managed('updated', files_to_update, path_from, path_to)
-            if reset_list('updated', files_to_update, path_from, path_to):
+            if reset_list('updated', path_from, path_to):
                 size_to_update = 0
 
         if (len(files_to_copy) + len(files_to_update)) > 0:
@@ -616,22 +625,26 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
         show_files_to_be_transferred(number_to_transfer_from_b_to_a, second_folder, first_folder, not_exist_in_a,
                                      updated_items_b, size_copy_from_b_to_a, size_update_from_b_to_a)
 
-    def show_files_to_remove(folder, files_to_delete, size_files_to_delete):
+    def show_files_to_remove(folder, files_to_delete, size_files_to_delete, path_from, path_to, list_to_copy):
+        # Function that shows you files to be deleted and gives an opportunity to reset the list or
+        # to copy files where them were deleted to instead of deleting
         print('\nNumber of items to remove from \'{}\' is \'{}\'.'.format(folder, len(files_to_delete)))
         logFile.info('\nNumber of items to remove from \'{}\' is \'{}\'.'.format(folder, len(files_to_delete)))
         print_files_to_be_managed('deleted', files_to_delete, None, None)
-        if reset_list('deleted', files_to_delete, None, None):
-            size1 = 0
+        if reset_list('deleted', None, None):
+            copy_not_delete(files_to_delete, path_from, path_to, list_to_copy)
         else:
             size1 = size_files_to_delete / 1024 ** 2  # convert in megabytes
-        print('Size of items to remove from \'{}\' is {:.2f} MB.'.format(folder, size1))
-        logFile.info('Size of items to remove from \'{}\' is {:.2f} MB.'.format(folder, size1))
+            print('Size of items to remove from \'{}\' is {:.2f} MB.'.format(folder, size1))
+            logFile.info('Size of items to remove from \'{}\' is {:.2f} MB.'.format(folder, size1))
 
     if len(must_remove_from_a) > 0:
-        show_files_to_remove(first_folder, must_remove_from_a, size_to_remove_from_a)
+        show_files_to_remove(first_folder, must_remove_from_a, size_to_remove_from_a, first_folder, second_folder,
+                             not_exist_in_b)
 
     if len(must_remove_from_b) > 0:
-        show_files_to_remove(second_folder, must_remove_from_b, size_to_remove_from_b)
+        show_files_to_remove(second_folder, must_remove_from_b, size_to_remove_from_b, second_folder, first_folder,
+                             not_exist_in_a)
 
     result = [not_exist_in_a, not_exist_in_b, to_be_updated_from_b_to_a, to_be_updated_from_a_to_b, must_remove_from_a,
               must_remove_from_b]
