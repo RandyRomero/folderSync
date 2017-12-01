@@ -553,11 +553,14 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
                 print('It is wrong input, try again.')
                 logFile.info('It is wrong input, try again.\n')
 
-    def print_files_to_be_transferred(operation, list_of_files, path_from, path_to):
+    def print_files_to_be_managed(operation, list_of_files, path_from, path_to):
         # Show list of files to be copied if needed
         while True:
-            question = 'Do you want to SEE the list of files to be {} from {} ' \
-                       'to {}? y/n: '.format(operation, path_from, path_to)
+            if operation != 'deleted':
+                question = 'Do you want to SEE the list of files to be {} from {} ' \
+                           'to {}? y/n: '.format(operation, path_from, path_to)
+            else:
+                question = 'Do you want to SEE the list of files to be {}? y/n: '.format(operation)
             see_list = input(question)
             logFile.info(question + '\n')
             if see_list.lower() == 'y':
@@ -579,12 +582,12 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
         logFile.info(message)
 
         if len(files_to_copy) > 0:
-            print_files_to_be_transferred('copied', files_to_copy, path_from, path_to)
+            print_files_to_be_managed('copied', files_to_copy, path_from, path_to)
             if reset_list(files_to_copy, path_from, path_to):
                 size_to_copy = 0  # Reset size of files to be copied if list of files to be copied was cleared
 
         if len(files_to_update) > 0:
-            print_files_to_be_transferred('updated', files_to_update, path_from, path_to)
+            print_files_to_be_managed('updated', files_to_update, path_from, path_to)
             if reset_list(files_to_update, path_from, path_to):
                 size_to_update = 0
 
@@ -606,6 +609,7 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
     def show_files_to_remove(folder, files_to_delete, size_files_to_delete):
         print('\nNumber of items to remove from \'{}\' is \'{}\'.'.format(folder, len(files_to_delete)))
         logFile.info('\nNumber of items to remove from \'{}\' is \'{}\'.'.format(folder, len(files_to_delete)))
+        print_files_to_be_managed('deleted', files_to_delete, None, None)
         size = size_files_to_delete / 1024 ** 2  # convert in megabytes
         print('Size of items to remove from \'{}\' is {:.2f} MB.'.format(folder, size))
         logFile.info('Size of items to remove from \'{}\' is {:.2f} MB.'.format(folder, size))
