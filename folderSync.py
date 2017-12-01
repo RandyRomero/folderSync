@@ -534,18 +534,27 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
     print('--- {0:.3f} --- seconds\n'.format(time.time() - start_time))
     logFile.info('--- {0:.3f} --- seconds'.format(time.time() - start_time) + '\n')
 
-    def reset_list(list_of_files, path_from, path_to):
+    def reset_list(operation, list_of_files, path_from, path_to):
         # Reset list of files if needed
         while True:
-            question = 'Do you want to RESET the list of files to be copied from {} ' \
-                       'to {}? y/n: '.format(path_from, path_to)
+            if operation != 'deleted':
+                question = 'Do you want to RESET the list of files to be {} from {} ' \
+                           'to {}? y/n: '.format(operation, path_from, path_to)
+            else:
+                question = 'Do you want to RESET the list of files to be {}? y/n: '.format(operation)
             reset_list_or_not = input(question)
             logFile.info(question + '\n')
             if reset_list_or_not.lower() == 'y':
                 list_of_files[:] = []
                 if len(list_of_files) == 0:
-                    print('The list of files to be copied from {} to {} was cleared.'.format(path_from, path_to))
-                    logFile.info('The list of files to be copied from {} to {} was cleared.'.format(path_from, path_to))
+                    if operation != 'deleted':
+                        message = 'The list of files to be {} from {} to {} was cleared.'.format(operation, path_from,
+                                                                                                 path_to)
+                    else:
+                        message = 'The list of files to be {} was cleared.'.format(operation)
+
+                    print(message)
+                    logFile.info(message)
                     return True
             elif reset_list_or_not.lower() == 'n':
                 return False
@@ -583,12 +592,12 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
 
         if len(files_to_copy) > 0:
             print_files_to_be_managed('copied', files_to_copy, path_from, path_to)
-            if reset_list(files_to_copy, path_from, path_to):
+            if reset_list('copied', files_to_copy, path_from, path_to):
                 size_to_copy = 0  # Reset size of files to be copied if list of files to be copied was cleared
 
         if len(files_to_update) > 0:
             print_files_to_be_managed('updated', files_to_update, path_from, path_to)
-            if reset_list(files_to_update, path_from, path_to):
+            if reset_list('updated', files_to_update, path_from, path_to):
                 size_to_update = 0
 
         if (len(files_to_copy) + len(files_to_update)) > 0:
@@ -610,7 +619,10 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
         print('\nNumber of items to remove from \'{}\' is \'{}\'.'.format(folder, len(files_to_delete)))
         logFile.info('\nNumber of items to remove from \'{}\' is \'{}\'.'.format(folder, len(files_to_delete)))
         print_files_to_be_managed('deleted', files_to_delete, None, None)
-        size = size_files_to_delete / 1024 ** 2  # convert in megabytes
+        if reset_list('deleted', files_to_delete, None, None):
+            size = 0
+        else:
+            size = size_files_to_delete / 1024 ** 2  # convert in megabytes
         print('Size of items to remove from \'{}\' is {:.2f} MB.'.format(folder, size))
         logFile.info('Size of items to remove from \'{}\' is {:.2f} MB.'.format(folder, size))
 
