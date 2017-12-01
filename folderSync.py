@@ -22,7 +22,6 @@ import send2trash
 import shelve
 import sys
 import time
-import traceback
 import handle_logs
 import traceback
 
@@ -575,7 +574,7 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
                                      size_to_copy, size_to_update):
         # Function that prints and logs files to be copied and to be updated und allows to reset these lists
         message = '\nNumber of items to transfer from \'{}\' to \'{}\' is {}.'.format(path_from, path_to,
-                                                                                    str(number_to_transfer))
+                                                                                      str(number_to_transfer))
         print(message)
         logFile.info(message)
 
@@ -590,7 +589,6 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
                 size_to_update = 0
 
         if (len(files_to_copy) + len(files_to_update)) > 0:
-            # TODO Get actual total size of photos to transfer
             size = (size_to_copy + size_to_update) / 1024 ** 2
             message = 'Total size of files to be transferred from \'{}\' to \'{}\' is {:.2f} MB.'.format(path_from,
                                                                                                          path_to, size)
@@ -605,25 +603,18 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
         show_files_to_be_transferred(number_to_transfer_from_b_to_a, second_folder, first_folder, not_exist_in_a,
                                      updated_items_b, size_copy_from_b_to_a, size_update_from_b_to_a)
 
-    if len(must_remove_from_a) > 0:
+    def show_files_to_remove(folder, files_to_delete, size_files_to_delete):
+        print('\nNumber of items to remove from \'{}\' is \'{}\'.'.format(folder, len(files_to_delete)))
+        logFile.info('\nNumber of items to remove from \'{}\' is \'{}\'.'.format(folder, len(files_to_delete)))
+        size = size_files_to_delete / 1024 ** 2  # convert in megabytes
+        print('Size of items to remove from \'{}\' is {:.2f} MB.'.format(folder, size))
+        logFile.info('Size of items to remove from \'{}\' is {:.2f} MB.'.format(folder, size))
 
-        print('\nNumber of items to remove from \'' + first_folder + '\' is ' + str(len(must_remove_from_a)) + '.')
-        logFile.info('\nTotal size of items to remove from \'' + first_folder + '\' is ' +
-                     str(len(must_remove_from_a)) + '.')
-        print('Size of items to remove from \'' + first_folder + '\' is ' +
-              str("{0:.2f}".format(size_to_remove_from_a / 1024**2)) + ' MB.')
-        logFile.info('Size of items to remove from \'' + first_folder + '\' is ' +
-                     str("{0:.2f}".format(size_to_remove_from_a / 1024**2)) + ' MB.')
+    if len(must_remove_from_a) > 0:
+        show_files_to_remove(first_folder, must_remove_from_a, size_to_remove_from_a)
 
     if len(must_remove_from_b) > 0:
-        print('Number of items to remove from \'' + second_folder + '\' is ' + str(len(must_remove_from_b)) + '.')
-        logFile.info('Total size of items to remove from \'' + second_folder + '\' is ' +
-                     str(len(must_remove_from_b)) + '.')
-
-        print('Size of items to remove from \'' + second_folder + '\' is ' +
-              str("{0:.2f}".format(size_to_remove_from_b / 1024**2)) + ' MB.')
-        logFile.info('Size of items to remove from \'' + second_folder + '\' is ' +
-                     str("{0:.2f}".format(size_to_remove_from_b / 1024**2)) + ' MB.')
+        show_files_to_remove(second_folder, must_remove_from_b, size_to_remove_from_b)
 
     result = [not_exist_in_a, not_exist_in_b, to_be_updated_from_b_to_a, to_be_updated_from_a_to_b, must_remove_from_a,
               must_remove_from_b]
