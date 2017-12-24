@@ -127,8 +127,8 @@ def get_snapshot(path_to_root_folder, root_folder):
 
             size_of_current_file = os.path.getsize(all_paths[0])
             total_size += size_of_current_file
-            current_snapshot[path_with_root] = \
-                ['file', all_paths, size_of_current_file, math.ceil(os.path.getmtime(all_paths[0]))]
+            current_snapshot[path_with_root] = ['file', all_paths, size_of_current_file,
+                                                math.ceil(os.path.getmtime(all_paths[0]))]
             # math.ceil for rounding float because otherwise it is to precise for our purpose
             files_number += 1
 
@@ -158,8 +158,8 @@ def get_changes_between_folder_states(path_to_folder, root_of_path):
     try:
         previous_snapshot = shel_file['snapshot']  # load previous snapshot
     except KeyError:
-        message = 'Error: Unfortunately, database with previous state of folder is corrupted.\n' \
-              'Program will assume that folder has never been synchronized before.'
+        message = ('Error: Unfortunately, database with previous state of folder is corrupted.\n' 
+                   'Program will assume that folder has never been synchronized before.')
         print(message)
         logFile.error(message)
         logFile.error(traceback.format_exc())
@@ -253,8 +253,6 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
     size_update_from_b_to_a = 0  # Ditto for 2nd folder
     size_of_items_in_a = 0  # Total of all files in 1st folder
     size_of_items_in_b = 0  # Ditto for 2nd folder
-    size_to_remove_from_a = 0  # Total size of files to be removed
-    size_to_remove_from_b = 0  # Ditto for 2nd folder
     skipped_files = []  # Files to skip (because both were changed since last sync)
     store_date_a = 0  # Time when snapshot of 1st folder was saved to storage
     store_date_b = 0  # Ditto for 2nd folder
@@ -290,6 +288,72 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
         paths_of_snap_b.append(snap_b[key][1][3])
 
     print()  # this print() is needed to make offset
+
+    def print_and_log_what_will_be_synced():
+        # Right before ask user whether he wants to start manipulating files this function will show him
+        # which files are going to be deleted or copied
+
+        def get_size_of_files_to_remove(files_to_delete):
+            total_size = 0
+            for item in files_to_delete:
+                total_size += item[2]
+            return total_size
+
+        def get_size_files_to_transfer(files_to_copy, files_to_update):
+            total_size = 0
+            # Loop two lists at once to get size of all files to be copied or updated
+            for item_a in files_to_copy:
+                total_size += item_a[2]
+
+            for item_b in files_to_update:
+                total_size += item_b[2]
+
+            return total_size
+
+        def show_stat_to_be_transferred(num_files_to_transfer, path1, path2, files_to_copy, files_to_update):
+            """
+            Log and print message how many files will be copied from one folder to another and total size of files
+            :files_to_copy: list of files that will be copied from source folder to destination folder
+            :files_to_update: list of files to be updated due to changes
+            :param num_files_to_transfer: total number of files to be transferred
+            :param path1: source folder
+            :param path2: destination folder
+            """
+            message1 = '\nNumber of items to transfer from \'{}\' to \'{}\' is {}.'.format(path1, path2,
+                                                                                         num_files_to_transfer)
+            print(message1)
+            logFile.info(message1 + '\n')
+
+            size_files_to_be_copied = get_size_files_to_transfer(files_to_copy, files_to_update)
+
+            message1 = ('Total size of files to transfer from \'{}\' to \'{}\' is '
+                        '{:.2f} MB.'.format(path1, path2, size_files_to_be_copied / 1024 ** 2))
+            print(message1)
+            logFile.info(message1)
+
+        def show_stat_to_be_deleted(path, num_files_to_delete, files_to_remove):
+            print('Number of item to delete from \'{}\' is {}.'.format(path, num_files_to_delete))
+            logFile.info('Number of item to delete from \'{}\' is {}.'.format(path, num_files_to_delete))
+            size_files_to_be_deleted = get_size_of_files_to_remove(files_to_remove)
+            message1 = 'Size of items to delete from \'{}\' is ' \
+                       '{:.2f} MB'.format(path, size_files_to_be_deleted / 1024 ** 2)
+            print(message1)
+            logFile.info(message1)
+
+        if number_to_transfer_from_a_to_b > 0:
+            # Show user (and log) number of files and total size of what will be copied
+            show_stat_to_be_transferred(number_to_transfer_from_a_to_b, first_folder, second_folder, not_exist_in_b,
+                                        to_be_updated_from_a_to_b)
+
+        if number_to_transfer_from_b_to_a > 0:
+            show_stat_to_be_transferred(number_to_transfer_from_b_to_a, second_folder, first_folder, not_exist_in_a,
+                                        to_be_updated_from_b_to_a)
+
+        if len(must_remove_from_a) > 0:
+            show_stat_to_be_deleted(first_folder, len(must_remove_from_a), must_remove_from_a)
+
+        if len(must_remove_from_b) > 0:
+            show_stat_to_be_deleted(second_folder, len(must_remove_from_b), must_remove_from_b)
 
     def compare_files_mtime(file_from_a, file_from_b):
         # Compare time when files were changed last time
@@ -414,7 +478,6 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
                 if snap_a[key][0] == 'file':
                     print('- Will be removed from \'' + firstFolder + '\'')
                     logFile.info('- Will be removed from \'' + firstFolder + '\'')
-                    size_to_remove_from_a += snap_a[key][2]
                 continue
 
             else:  # if file doesn't exist in 2nd folder -> add it in list to be copied from 1st folder
@@ -444,8 +507,6 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
                 print('- Will be removed from \'' + secondFolder + '\'')
                 logFile.info('- Will be removed from \'' + secondFolder + '\'')
                 must_remove_from_b.append(snap_b[key])
-                if snap_b[key][0] == 'file':
-                    size_to_remove_from_b += snap_b[key][2]
 
             else:  # if file doesn't exists in 1st folder -> add it in list to be copied from 2nd folder
                 print('<- Doesn\'t exist in \'' + firstFolder + '\' and will be copied there.')
@@ -550,13 +611,14 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
                 logFile.info('It is wrong input, try again.\n')
 
     def reverse_decision_copy_or_delete(operation, path_from, path_to, files_to_decide, list_to_add_files):
+        # Add ability to delete files from folder instead of copying or to copy instead of deleting
         while True:
             if operation != 'delete':
-                question = 'Would you like to delete these files from {0} instead of copying from {0} to {1} ? y/n: ' \
-                    .format(path_from, path_to)
+                question = ('Would you like to delete these files from {0} instead of copying '
+                            'from {0} to {1} ? y/n: '.format(path_from, path_to))
             else:
-                question = 'Would you like to copy these files from {0} to {1} instead of deleting from {0} ? y/n: ' \
-                    .format(path_from, path_to)
+                question = ('Would you like to copy these files from {0} to {1} instead of deleting '
+                            'from {0} ? y/n: ' .format(path_from, path_to))
             yes_or_no = input(question)
             logFile.info(question + '\n')
             if yes_or_no.lower() == 'y':
@@ -662,9 +724,28 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
     #         else:
     #             print('It is wrong input, try again.')
     #             logFile.info('It is wrong input, try again.\n')
+    # def get_size_of_files_to_remove(files_to_delete):
+    #     total_size = 0
+    #     for item in files_to_delete:
+    #         total_size += item[2]
+    #     return total_size
 
-    def show_files_to_be_transferred(number_to_transfer, path_from, path_to, files_to_copy, files_to_update,
-                                     size_to_copy, size_to_update, files_to_delete):
+    def show_files_to_remove(folder, files_to_delete, path_from, path_to, list_to_copy):
+        # Function that shows you files to be deleted and gives an opportunity to reset the list or
+        # to copy files where them were deleted to instead of deleting
+        print('\nNumber of items to remove from \'{}\' is \'{}\'.'.format(folder, len(files_to_delete)))
+        logFile.info('\nNumber of items to remove from \'{}\' is \'{}\'.'.format(folder, len(files_to_delete)))
+        print_files_to_be_managed('deleted', files_to_delete, None, None)
+        if get_users_opinion_reverse_copy_or_delete('delete'):
+            reverse_decision_copy_or_delete('delete', path_from, path_to, files_to_delete, list_to_copy)
+        # else:
+        #     size1 = get_size_of_files_to_remove(files_to_delete) / 1024**2
+        #     # size1 = size_files_to_delete / 1024 ** 2  # convert in** megabytes
+        #     print('Size of items to remove from \'{}\' is {:.2f} MB.'.format(folder, size1))
+        #     logFile.info('Size of items to remove from \'{}\' is {:.2f} MB.'.format(folder, size1))
+
+    def show_files_to_transfer(number_to_transfer, path_from, path_to, files_to_copy, files_to_update,
+                               size_to_copy, size_to_update, files_to_delete):
         # Function that prints and logs files to be copied and to be updated und allows to reset these lists
         message1 = '\nNumber of items to transfer from \'{}\' to \'{}\' is {}.'.format(path_from, path_to,
                                                                                        number_to_transfer)
@@ -675,13 +756,11 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
             print_files_to_be_managed('copied', files_to_copy, path_from, path_to)
             if get_users_opinion_reverse_copy_or_delete('copy'):
                 reverse_decision_copy_or_delete('copy', path_from, path_to, files_to_copy, files_to_delete)
-                size_to_copy = 0  # Reset size of files to be copied if list of files to be copied was cleared
 
         if len(files_to_update) > 0:
             print_files_to_be_managed('updated', files_to_update, path_from, path_to)
             if get_users_opinion_reverse_copy_or_delete('update'):
                 reverse_decision_copy_or_delete('update', path_from, path_to, files_to_copy, files_to_delete)
-                size_to_update = 0
 
         if (len(files_to_copy) + len(files_to_update)) > 0:
             size1 = (size_to_copy + size_to_update) / 1024 ** 2
@@ -691,12 +770,12 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
             logFile.info(message1)
 
     if number_to_transfer_from_a_to_b > 0:
-        show_files_to_be_transferred(number_to_transfer_from_a_to_b, first_folder, second_folder, not_exist_in_b,
-                                     updated_items_a, size_copy_from_a_to_b, size_update_from_a_to_b, must_remove_from_a)
+        show_files_to_transfer(number_to_transfer_from_a_to_b, first_folder, second_folder, not_exist_in_b,
+                               updated_items_a, size_copy_from_a_to_b, size_update_from_a_to_b, must_remove_from_a)
 
     if number_to_transfer_from_b_to_a > 0:
-        show_files_to_be_transferred(number_to_transfer_from_b_to_a, second_folder, first_folder, not_exist_in_a,
-                                     updated_items_b, size_copy_from_b_to_a, size_update_from_b_to_a, must_remove_from_b)
+        show_files_to_transfer(number_to_transfer_from_b_to_a, second_folder, first_folder, not_exist_in_a,
+                               updated_items_b, size_copy_from_b_to_a, size_update_from_b_to_a, must_remove_from_b)
 
     # def get_users_decision_whether_delete_files():
     #     # Menu that ask user whether he sure or not about deleting files
@@ -712,26 +791,13 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
     #             print('It is wrong input, try again.')
     #             logFile.info('It is wrong input, try again.\n')
 
-    def show_files_to_remove(folder, files_to_delete, size_files_to_delete, path_from, path_to, list_to_copy):
-        # Function that shows you files to be deleted and gives an opportunity to reset the list or
-        # to copy files where them were deleted to instead of deleting
-        print('\nNumber of items to remove from \'{}\' is \'{}\'.'.format(folder, len(files_to_delete)))
-        logFile.info('\nNumber of items to remove from \'{}\' is \'{}\'.'.format(folder, len(files_to_delete)))
-        print_files_to_be_managed('deleted', files_to_delete, None, None)
-        if get_users_opinion_reverse_copy_or_delete('delete'):
-            reverse_decision_copy_or_delete('delete', path_from, path_to, files_to_delete, list_to_copy)
-        else:
-            size1 = size_files_to_delete / 1024 ** 2  # convert in megabytes
-            print('Size of items to remove from \'{}\' is {:.2f} MB.'.format(folder, size1))
-            logFile.info('Size of items to remove from \'{}\' is {:.2f} MB.'.format(folder, size1))
-
     if len(must_remove_from_a) > 0:
-        show_files_to_remove(first_folder, must_remove_from_a, size_to_remove_from_a, first_folder, second_folder,
-                             not_exist_in_b)
+        show_files_to_remove(first_folder, must_remove_from_a, first_folder, second_folder, not_exist_in_b)
 
     if len(must_remove_from_b) > 0:
-        show_files_to_remove(second_folder, must_remove_from_b, size_to_remove_from_b, second_folder, first_folder,
-                             not_exist_in_a)
+        show_files_to_remove(second_folder, must_remove_from_b, second_folder, first_folder, not_exist_in_a)
+
+    print_and_log_what_will_be_synced()
 
     result = [not_exist_in_a, not_exist_in_b, to_be_updated_from_b_to_a, to_be_updated_from_a_to_b, must_remove_from_a,
               must_remove_from_b]
@@ -985,10 +1051,7 @@ secondFolderSynced = has_it_ever_been_synced(secondFolder)
 logFile.info(secondFolder + ' Has been synced before? ' + str(secondFolderSynced) + '\n')
 
 # check if both folders were synced before
-if firstFolderSynced and secondFolderSynced:
-    bothSynced = True
-else:
-    bothSynced = False
+bothSynced = True if firstFolderSynced and secondFolderSynced else False
 
 # get names of root folders to be compared
 rootFirstFolder = re.search(r'(\w+$)', firstFolder).group(0)
