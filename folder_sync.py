@@ -314,15 +314,16 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
 
         def show_stat_to_be_transferred(num_files_to_transfer, path1, path2, files_to_copy, files_to_update):
             """
-            Log and print message how many files will be copied from one folder to another and total size of files
-            :files_to_copy: list of files that will be copied from source folder to destination folder
-            :files_to_update: list of files to be updated due to changes
+             Log and print message how many files will be copied from one folder to another and total size of files
             :param num_files_to_transfer: total number of files to be transferred
             :param path1: source folder
             :param path2: destination folder
+            :param files_to_copy: list of files that will be copied from source folder to destination folder
+            :param files_to_update: list of files to be updated due to changes
+            :return: None
             """
             message1 = '\nNumber of items to transfer from \'{}\' to \'{}\' is {}.'.format(path1, path2,
-                                                                                         num_files_to_transfer)
+                                                                                           num_files_to_transfer)
             print(message1)
             logFile.info(message1 + '\n')
 
@@ -634,58 +635,6 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
                 print('It is wrong input, try again.')
                 logFile.info('It is wrong input, try again.\n')
 
-    # def copy_not_delete(list_of_files, path_from, path_to, list_to_copy):
-    #     while True:
-    #         question = 'Would you like to copy these files from {0} to {1} instead of deleting from {0} ? y/n: '\
-    #             .format(path_from, path_to)
-    #         copy_list_or_not = input(question)
-    #         logFile.info(question + '\n')
-    #         if copy_list_or_not.lower() == 'y':
-    #             list_to_copy += list_of_files
-    #             list_of_files[:] = []
-    #             return True
-    #         elif copy_list_or_not.lower() == 'n':
-    #             list_of_files[:] = []
-    #             message1 = 'The list of files to be deleted was cleared.'
-    #             print(message1)
-    #             return False
-    #         else:
-    #             print('It is wrong input, try again.')
-    #             logFile.info('It is wrong input, try again.\n')
-    #
-    # def get_users_decision_whether_copy_files():
-    #     # Menu that ask user whether he sure or not about deleting files
-    #     while True:
-    #         question = 'Are you sure you want copy these files? y/n: '
-    #         sure_or_not = input(question)
-    #         logFile.info(question + '\n')
-    #         if sure_or_not.lower() == 'n':
-    #             return True
-    #         elif sure_or_not.lower() == 'y':
-    #             return False
-    #         else:
-    #             print('It is wrong input, try again.')
-    #             logFile.info('It is wrong input, try again.\n')
-
-    # def reset_list(operation, path_from, path_to, list_of_files):
-    #     # Menu that ask user whether he sure or not about deleting files
-    #     while True:
-    #         question = 'Do you want to RESET the list of files to be {} from {} ' \
-    #                        'to {}? y/n: '.format(operation, path_from, path_to)
-    #         reset_or_not = input(question)
-    #         logFile.info(question + '\n')
-    #         if reset_or_not.lower() == 'y':
-    #             list_of_files[:] = []
-    #             if len(list_of_files) == 0:
-    #                 print('List of files were cleared.')
-    #                 logFile.info('List of files were cleared.')
-    #             return True
-    #         elif reset_or_not.lower() == 'n':
-    #             return False
-    #         else:
-    #             print('It is wrong input, try again.')
-    #             logFile.info('It is wrong input, try again.\n')
-
     def print_files_to_be_managed(operation, list_of_files, path_from, path_to):
         # Show list of files to be copied if needed
         while True:
@@ -706,30 +655,6 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
                 print('It is wrong input, try again.')
                 logFile.info('It is wrong input, try again.\n')
 
-    # def delete_not_copy(path_from, path_to, list_to_copy, list_to_delete):
-    #     while True:
-    #         question = 'Would you like to delete these files from {0} instead of copying from {0} to {1} ? y/n: ' \
-    #             .format(path_from, path_to)
-    #         copy_list_or_not = input(question)
-    #         logFile.info(question + '\n')
-    #         if copy_list_or_not.lower() == 'y':
-    #             list_to_delete += list_to_copy
-    #             list_to_copy[:] = []
-    #             return True
-    #         elif copy_list_or_not.lower() == 'n':
-    #             list_to_copy[:] = []
-    #             message1 = 'The list of files to be copied was cleared.'
-    #             print(message1)
-    #             return False
-    #         else:
-    #             print('It is wrong input, try again.')
-    #             logFile.info('It is wrong input, try again.\n')
-    # def get_size_of_files_to_remove(files_to_delete):
-    #     total_size = 0
-    #     for item in files_to_delete:
-    #         total_size += item[2]
-    #     return total_size
-
     def show_files_to_remove(folder, files_to_delete, path_from, path_to, list_to_copy):
         # Function that shows you files to be deleted and gives an opportunity to reset the list or
         # to copy files where them were deleted to instead of deleting
@@ -748,7 +673,7 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
                                size_to_copy, size_to_update, files_to_delete):
         # Function that prints and logs files to be copied and to be updated und allows to reset these lists
         message1 = 'Number of items to transfer from \'{}\' to \'{}\' is {}.'.format(path_from, path_to,
-                                                                                       number_to_transfer)
+                                                                                     number_to_transfer)
         print('\n' + message1)
         logFile.info(message1)
 
@@ -778,20 +703,6 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
     if number_to_transfer_from_b_to_a > 0:
         show_files_to_transfer(number_to_transfer_from_b_to_a, second_folder, first_folder, not_exist_in_a,
                                updated_items_b, size_copy_from_b_to_a, size_update_from_b_to_a, must_remove_from_b)
-
-    # def get_users_decision_whether_delete_files():
-    #     # Menu that ask user whether he sure or not about deleting files
-    #     while True:
-    #         question = 'Are you sure you want delete these files? y/n: '
-    #         sure_or_not = input(question)
-    #         logFile.info(question + '\n')
-    #         if sure_or_not.lower() == 'n':
-    #             return True
-    #         elif sure_or_not.lower() == 'y':
-    #             return False
-    #         else:
-    #             print('It is wrong input, try again.')
-    #             logFile.info('It is wrong input, try again.\n')
 
     if len(must_remove_from_a) > 0:
         show_files_to_remove(first_folder, must_remove_from_a, first_folder, second_folder, not_exist_in_b)
@@ -865,8 +776,8 @@ def sync_files(compare_result, first_folder, second_folder):
             # ask user to close program that is using file that should be removed and try to perform removing again
             except OSError:
                 logFile.error(traceback.format_exc())
-                message1 = '\'{}\' has been opened in another app. Close all apps that can use this file and try again.'\
-                    .format(file_to_delete)
+                message1 = ('\'{}\' has been opened in another app. Close all apps that can use this file '
+                            'and try again.'.format(file_to_delete))
                 print(message1)
                 logFile.warning(message1)
                 user_decision = input('Try again? y/n: ').lower()
