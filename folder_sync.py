@@ -1,14 +1,14 @@
 #! python3
 
-# Program that can sync all files and folders between two chosen folders.
+# folder_sync is a program that can sync all files and folders between two chosen folders.
 # Dedicated for Windows.
 # Purpose of that script is to make exact duplicates of two folders.
 # For example, you can back up and update your backups with this script.
 # During first sync script assumes all files that do not exist in one folder are new for the
 # second folder and vice versa.
 # During second and other sync script can delete files from folder if they were deleted in the other one.
-# It can also detected updated files.
-# For file comparison it uses timestamps, size of file and binary comparison - depend on a situation.
+# It can also detect updated files.
+# For file comparison it uses timestamps, size of file and binary comparison - it depends on a situation.
 # Script also write logs to .\log folder and clear the oldest ones, when size of logs folder is more than 20 Mb.
 
 # Written by Aleksandr Mikheev
@@ -50,7 +50,7 @@ def choose_folder():  # used to check validity of file's path given by user
             return path_to_folder
 
 
-def menu_choose_folders():  # let a user choose folders and check them not to have the same path
+def menu_choose_folders():  # let a user choose folders and assure they do not have the same path
 
     global firstFolder
     global secondFolder
@@ -90,7 +90,7 @@ def check_longevity_of_path(path):  # this helps to avoid Windows constraint to 
 
 
 def get_snapshot(path_to_root_folder, root_folder):
-    # Get all file and folder paths,
+    # Get all paths of every file and folder,
     # and collect file size and file time of modification.
     # Returns all paths with information as a single snapshot-dictionary.
 
@@ -279,10 +279,12 @@ def compare_snapshot(first_folder, second_folder, root_first_folder, root_second
             total_size = 0
             # Loop two lists at once to get size of all files to be copied or updated
             for item_a in files_to_copy:
-                total_size += item_a[2]
+                if item_a[0] == 'file':
+                    total_size += item_a[2]
 
             for item_b in files_to_update:
-                total_size += item_b[2]
+                if item_b[0] == 'file':
+                    total_size += item_b[2]
 
             return total_size
 
