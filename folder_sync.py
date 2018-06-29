@@ -83,14 +83,6 @@ def has_it_ever_been_synced(path_to_root_folder):  # check if there is already s
         return False
 
 
-def check_longevity_of_path(path):  # this helps to avoid Windows constraint to longevity of path
-    if 'windows' not in sys.platform.lower():
-        return path
-    if len(path) > 259:
-        return '\\\\?\\' + path
-    return path
-
-
 def get_snapshot(path_to_root_folder, root_folder):
     # Get all paths of every file and folder,
     # and collect file size and file time of modification.
@@ -109,7 +101,7 @@ def get_snapshot(path_to_root_folder, root_folder):
     # subtract path to root folder from full path in order to get path to folder/file without root folder
     # this is necessary to compare files from different folders
     def get_path_without_root_folder(entire_path, path_to_root):
-        if 'windows' in sys.platform.lower():
+        if 'win' in sys.platform.lower():
             return entire_path.split(path_to_root + '\\')[1]
         else:
             return entire_path.split(path_to_root + '/')[1]
@@ -128,8 +120,7 @@ def get_snapshot(path_to_root_folder, root_folder):
             folders_number += 1
 
         for file in files:
-            # TODO Substitute check_longevity with try and except
-            full_path = check_longevity_of_path(os.path.join(root, file))
+            full_path = os.path.join(root, file)
             path_wout_root = get_path_without_root_folder(full_path, path_to_root_folder)
             path_with_root = os.path.join(root_folder, path_wout_root)
             all_paths = [full_path, root_folder, path_with_root, path_wout_root]
@@ -871,8 +862,7 @@ def sync_files(compare_result, first_folder, second_folder):
                         logFile.info('\'' + item[1][0] + '\' is heavy. Please be patient...')
 
                     # copy file
-                    shutil.copy2(full_path_item_in_this_folder,
-                                 check_longevity_of_path(full_path_item_that_not_exits_yet))
+                    shutil.copy2(full_path_item_in_this_folder, full_path_item_that_not_exits_yet)
 
                     were_copied += 1
                     total_size_copied_updated += item[2]
@@ -979,7 +969,7 @@ logFile.info(secondFolder + ' Has been synced before? ' + str(secondFolderSynced
 bothSynced = True if firstFolderSynced and secondFolderSynced else False
 
 # get names of root folders to be compared
-if 'windows' in sys.platform.lower():
+if 'win' in sys.platform.lower():
     rootFirstFolder = firstFolder.split('\\')[-1]
     rootSecondFolder = secondFolder.split('\\')[-1]
 else:
