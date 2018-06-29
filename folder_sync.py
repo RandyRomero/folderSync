@@ -84,6 +84,8 @@ def has_it_ever_been_synced(path_to_root_folder):  # check if there is already s
 
 
 def check_longevity_of_path(path):  # this helps to avoid Windows constraint to longevity of path
+    if 'windows' not in sys.platform.lower():
+        return path
     if len(path) > 259:
         return '\\\\?\\' + path
     return path
@@ -104,6 +106,14 @@ def get_snapshot(path_to_root_folder, root_folder):
 
     current_snapshot = {}  # dictionary for all paths to files and folders
 
+    # subtract path to root folder from full path in order to get path to folder/file without root folder
+    # this is necessary to compare files from different folders
+    def get_path_without_root_folder(entire_path, path_to_root):
+        if 'windows' in sys.platform.lower():
+            return entire_path.split(path_to_root + '\\')[1]
+        else:
+            return entire_path.split(path_to_root + '/')[1]
+
     for root, folders, files in os.walk(path_to_root_folder):  # recursively get paths of all files and folders
         # only add to list folders that not '.folderSyncSnapshot' and files that don't start with '~$'
         folders[:] = [x for x in folders if not x == '.folderSyncSnapshot']
@@ -111,17 +121,16 @@ def get_snapshot(path_to_root_folder, root_folder):
 
         for folder in folders:
             full_path = os.path.join(root, folder)
-            # subtract path to root folder from full path in order to get path to folder/file without root folder
-            # this is necessary to compare files from different folders
-            path_wout_root = full_path.split(path_to_root_folder + '\\')[1]
+            path_wout_root = get_path_without_root_folder(full_path, path_to_root_folder)
             path_with_root = os.path.join(root_folder, path_wout_root)
             all_paths = [full_path, root_folder, path_with_root, path_wout_root]
             current_snapshot[path_with_root] = ['folder', all_paths]
             folders_number += 1
 
         for file in files:
+            # TODO Substitute check_longevity with try and except
             full_path = check_longevity_of_path(os.path.join(root, file))
-            path_wout_root = full_path.split(path_to_root_folder + '\\')[1]
+            path_wout_root = get_path_without_root_folder(full_path, path_to_root_folder)
             path_with_root = os.path.join(root_folder, path_wout_root)
             all_paths = [full_path, root_folder, path_with_root, path_wout_root]
 
@@ -970,8 +979,12 @@ logFile.info(secondFolder + ' Has been synced before? ' + str(secondFolderSynced
 bothSynced = True if firstFolderSynced and secondFolderSynced else False
 
 # get names of root folders to be compared
-rootFirstFolder = re.search(r'(\w+$)', firstFolder).group(0)
-rootSecondFolder = re.search(r'(\w+$)', secondFolder).group(0)
+if 'windows' in sys.platform.lower():
+    rootFirstFolder = firstFolder.split('\\')[-1]
+    rootSecondFolder = secondFolder.split('\\')[-1]
+else:
+    rootFirstFolder = firstFolder.split('/')[-1]
+    rootSecondFolder = secondFolder.split('/')[-1]
 
 # add root of folders as first elements in these list in case if script would not be able to remove file;
 # to distinguish which not removed files belongs to which folder
