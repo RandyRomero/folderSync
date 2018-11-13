@@ -16,7 +16,6 @@
 
 import math
 import os
-import re
 import shutil
 import send2trash
 import shelve
@@ -74,13 +73,6 @@ def menu_choose_folders():  # let a user choose folders and assure they do not h
             break
 
     return firstFolder, secondFolder
-
-
-def has_it_ever_been_synced(path_to_root_folder):  # check if there is already snapshot from previous sync
-    if os.path.exists(os.path.join(path_to_root_folder, '.folderSyncSnapshot')):
-        return True
-    else:
-        return False
 
 
 def get_snapshot(path_to_root_folder, root_folder):
@@ -960,13 +952,13 @@ handle_logs.clean_log_folder(20, logFile, logConsole)
 menu_choose_folders()
 
 # check if there is snapshot of previous sync inside root directory
-firstFolderSynced = has_it_ever_been_synced(firstFolder)
+firstFolderSynced = os.path.exists(os.path.join(firstFolder, '.folderSyncSnapshot'))
 logFile.info(firstFolder + ' Has been synced before? ' + str(firstFolderSynced))
-secondFolderSynced = has_it_ever_been_synced(secondFolder)
+secondFolderSynced = os.path.exists(os.path.join(secondFolder, '.folderSyncSnapshot'))
 logFile.info(secondFolder + ' Has been synced before? ' + str(secondFolderSynced) + '\n')
 
 # check if both folders were synced before
-bothSynced = True if firstFolderSynced and secondFolderSynced else False
+bothSynced = (firstFolderSynced and secondFolderSynced) or False
 
 # get names of root folders to be compared
 if 'win' in sys.platform.lower():
