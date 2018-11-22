@@ -82,7 +82,7 @@ def get_snapshot(path_to_root_folder, root_folder):
 
     start_time = time.time()
 
-    logFile.info('Getting snapshot of \'' + path_to_root_folder + '\'...')
+    logFile.info('Getting snapshot of %s...', path_to_root_folder)
 
     folders_number = 0  # total number of all folders in given folder
     files_number = 0  # total number of files in given folder
