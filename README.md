@@ -1,4 +1,4 @@
-# folderSync
+# folder_sync
 Program that can sync all files and folders between two chosen directories (for Windows).
 
 Program that can sync all files and folders between two chosen folders.
