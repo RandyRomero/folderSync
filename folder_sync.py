@@ -11,7 +11,7 @@
 # Script also write logs to .\log folder and clear the oldest ones, when size of logs folder is more than 20 Mb.
 
 # Written by Aleksandr Mikheev
-# https://github.com/RandyRomero/folderSync
+# https://github.com/RandyRomero/folder_sync
 
 import math
 import os
